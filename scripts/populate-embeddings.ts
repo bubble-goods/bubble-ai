@@ -1,4 +1,6 @@
 #!/usr/bin/env npx tsx
+import 'dotenv/config'
+
 /**
  * Populate Supabase with Shopify taxonomy embeddings.
  *

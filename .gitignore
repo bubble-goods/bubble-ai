@@ -25,3 +25,10 @@ coverage/
 # Logs
 *.log
 npm-debug.log*
+
+# Nix
+.direnv/
+result
+
+# Supabase
+supabase/.temp/

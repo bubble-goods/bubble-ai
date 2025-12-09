@@ -19,20 +19,25 @@ If you already have Supabase running locally (e.g., for the main `bubble` projec
 3. Paste contents of `supabase/migrations/001_taxonomy_embeddings.sql`
 4. Run
 
-**Via psql**:
+**Via psql** (default password is `postgres`):
 ```bash
-psql -h localhost -p 54322 -U postgres -d postgres \
+PGPASSWORD=postgres psql -h localhost -p 54322 -U postgres -d postgres \
   < supabase/migrations/001_taxonomy_embeddings.sql
 ```
 
 ### 2. Get Your Credentials
 
-From your existing Supabase project directory:
+**Via Supabase Studio**:
+1. Open http://localhost:54323
+2. Go to **Project Settings** (gear icon) → **API**
+3. Copy the **Project URL**, **anon** key, and **service_role** key
+
+**Via CLI** (from your Supabase project directory):
 ```bash
 supabase status
 ```
 
-Note the `API URL` and `service_role key`.
+Note the `API URL`, `anon key`, and `service_role key`.
 
 ### 3. Set Environment Variables
 
