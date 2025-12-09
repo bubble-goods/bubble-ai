@@ -1,6 +1,12 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
-let supabaseClient: SupabaseClient | null = null
+export const TAXONOMY_SCHEMA = 'taxonomy'
+
+// Use generic SupabaseClient type to allow any schema
+// biome-ignore lint/suspicious/noExplicitAny: Supabase client schema typing is complex
+type TaxonomyClient = SupabaseClient<any, typeof TAXONOMY_SCHEMA>
+
+let supabaseClient: TaxonomyClient | null = null
 
 export interface SupabaseConfig {
   url: string
@@ -11,8 +17,10 @@ export interface SupabaseConfig {
  * Initialize the Supabase client.
  * Call this once at application startup.
  */
-export function initSupabase(config: SupabaseConfig): SupabaseClient {
-  supabaseClient = createClient(config.url, config.anonKey)
+export function initSupabase(config: SupabaseConfig): TaxonomyClient {
+  supabaseClient = createClient(config.url, config.anonKey, {
+    db: { schema: TAXONOMY_SCHEMA },
+  })
   return supabaseClient
 }
 
@@ -20,7 +28,7 @@ export function initSupabase(config: SupabaseConfig): SupabaseClient {
  * Get the initialized Supabase client.
  * Throws if not initialized.
  */
-export function getSupabase(): SupabaseClient {
+export function getSupabase(): TaxonomyClient {
   if (!supabaseClient) {
     throw new Error(
       'Supabase client not initialized. Call initSupabase() first.',
@@ -33,7 +41,7 @@ export function getSupabase(): SupabaseClient {
  * Initialize Supabase from environment variables.
  * Expects SUPABASE_URL and SUPABASE_ANON_KEY.
  */
-export function initSupabaseFromEnv(): SupabaseClient {
+export function initSupabaseFromEnv(): TaxonomyClient {
   const url = process.env.SUPABASE_URL
   const anonKey = process.env.SUPABASE_ANON_KEY
 

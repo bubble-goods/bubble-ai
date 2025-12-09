@@ -19,7 +19,7 @@ export async function matchTaxonomyCategories(
 
   const supabase = getSupabase()
 
-  const { data, error } = await supabase.rpc('match_taxonomy_categories', {
+  const { data, error } = await supabase.rpc('match_categories', {
     query_embedding: queryEmbedding,
     match_threshold: matchThreshold,
     match_count: matchCount,
@@ -56,7 +56,7 @@ export async function getCategoryEmbedding(
   const supabase = getSupabase()
 
   const { data, error } = await supabase
-    .from('shopify_taxonomy_embeddings')
+    .from('embeddings')
     .select('embedding')
     .eq('category_code', categoryCode)
     .single()
@@ -76,7 +76,7 @@ export async function getEmbeddingsCount(): Promise<number> {
   const supabase = getSupabase()
 
   const { count, error } = await supabase
-    .from('shopify_taxonomy_embeddings')
+    .from('embeddings')
     .select('*', { count: 'exact', head: true })
 
   if (error) {

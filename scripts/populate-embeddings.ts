@@ -31,7 +31,8 @@ import { loadTaxonomyFull } from '../src/taxonomy/loader.js'
 const EMBEDDING_MODEL = 'text-embedding-3-small'
 const EMBEDDING_DIMENSIONS = 1536
 const DEFAULT_BATCH_SIZE = 100
-const TABLE_NAME = 'shopify_taxonomy_embeddings'
+const TABLE_NAME = 'embeddings'
+const SCHEMA_NAME = 'taxonomy'
 
 interface CategoryRecord {
   category_code: string
@@ -57,7 +58,9 @@ function initOpenAI(): OpenAI {
 function initSupabase(): SupabaseClient {
   const url = getEnvVar('SUPABASE_URL')
   const key = getEnvVar('SUPABASE_SERVICE_KEY')
-  return createClient(url, key)
+  return createClient(url, key, {
+    db: { schema: SCHEMA_NAME },
+  })
 }
 
 function loadAllCategories(): CategoryRecord[] {
@@ -141,7 +144,7 @@ async function main(): Promise<void> {
   console.log('Shopify Taxonomy Embeddings Population Script')
   console.log('='.repeat(60))
   console.log(`Embedding model: ${EMBEDDING_MODEL}`)
-  console.log(`Target table: ${TABLE_NAME}`)
+  console.log(`Target table: ${SCHEMA_NAME}.${TABLE_NAME}`)
   console.log(`Batch size: ${batchSize}`)
   console.log(`Dry run: ${dryRun}`)
   console.log()
