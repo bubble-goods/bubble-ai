@@ -16,6 +16,12 @@ CREATE EXTENSION IF NOT EXISTS vector;
 -- Create taxonomy schema
 CREATE SCHEMA IF NOT EXISTS taxonomy;
 
+-- Grant permissions for Supabase roles
+GRANT USAGE ON SCHEMA taxonomy TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA taxonomy GRANT ALL ON TABLES TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA taxonomy GRANT USAGE, SELECT ON SEQUENCES TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA taxonomy GRANT EXECUTE ON FUNCTIONS TO postgres, anon, authenticated, service_role;
+
 -- Create table for taxonomy embeddings
 CREATE TABLE IF NOT EXISTS taxonomy.embeddings (
     id SERIAL PRIMARY KEY,
@@ -110,6 +116,11 @@ $$;
 -- Add comment for function documentation
 COMMENT ON FUNCTION taxonomy.match_categories IS
     'Performs semantic similarity search to find taxonomy categories matching a query embedding. Returns top N matches above the threshold.';
+
+-- Grant explicit permissions on created objects
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA taxonomy TO postgres, anon, authenticated, service_role;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA taxonomy TO postgres, anon, authenticated, service_role;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA taxonomy TO postgres, anon, authenticated, service_role;
 
 -- =============================================================================
 -- Verification Queries (run after populating embeddings)
