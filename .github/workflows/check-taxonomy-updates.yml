@@ -1,0 +1,115 @@
+name: Check Taxonomy Updates
+
+on:
+  schedule:
+    # Run on the 1st of each month at 9am UTC
+    - cron: '0 9 1 * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  check-updates:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get current taxonomy version
+        id: current
+        run: |
+          # Extract version from taxonomy.json (first line contains version info)
+          CURRENT_VERSION=$(head -1 data/taxonomy.json | grep -oP '"\d{4}-\d{2}"' | tr -d '"' || echo "unknown")
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT_VERSION"
+
+      - name: Check latest Shopify taxonomy release
+        id: latest
+        run: |
+          # Get latest stable release (excludes unstable/preview)
+          LATEST=$(curl -s https://api.github.com/repos/Shopify/product-taxonomy/releases | \
+            jq -r '[.[] | select(.tag_name | test("^v[0-9]{4}-[0-9]{2}$"))][0].tag_name' | \
+            sed 's/^v//')
+          echo "version=$LATEST" >> $GITHUB_OUTPUT
+          echo "Latest version: $LATEST"
+
+      - name: Compare versions
+        id: compare
+        run: |
+          CURRENT="${{ steps.current.outputs.version }}"
+          LATEST="${{ steps.latest.outputs.version }}"
+
+          if [ "$CURRENT" = "$LATEST" ]; then
+            echo "needs_update=false" >> $GITHUB_OUTPUT
+            echo "✅ Taxonomy is up to date ($CURRENT)"
+          else
+            echo "needs_update=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Update available: $CURRENT → $LATEST"
+          fi
+
+      - name: Create issue for update
+        if: steps.compare.outputs.needs_update == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const current = '${{ steps.current.outputs.version }}';
+            const latest = '${{ steps.latest.outputs.version }}';
+
+            // Check if issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'taxonomy-update'
+            });
+
+            const existingIssue = issues.data.find(i =>
+              i.title.includes(latest)
+            );
+
+            if (existingIssue) {
+              console.log(`Issue already exists: #${existingIssue.number}`);
+              return;
+            }
+
+            // Create new issue
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Update Shopify taxonomy to ${latest}`,
+              labels: ['taxonomy-update'],
+              body: `## Taxonomy Update Available
+
+            A new Shopify product taxonomy version is available.
+
+            | Current | Latest |
+            |---------|--------|
+            | ${current} | ${latest} |
+
+            ## Update Steps
+
+            1. Download the new taxonomy files:
+               \`\`\`bash
+               curl -o data/taxonomy.json https://raw.githubusercontent.com/Shopify/product-taxonomy/v${latest}/dist/en/taxonomy.json
+               curl -o data/categories.txt https://raw.githubusercontent.com/Shopify/product-taxonomy/v${latest}/dist/en/categories.txt
+               \`\`\`
+
+            2. Re-run the embedding population script:
+               \`\`\`bash
+               npm run populate-embeddings
+               \`\`\`
+
+            3. Verify the update:
+               \`\`\`bash
+               npm run test:run
+               \`\`\`
+
+            ## Links
+
+            - [Release notes](https://github.com/Shopify/product-taxonomy/releases/tag/v${latest})
+            - [Changelog](https://github.com/Shopify/product-taxonomy/blob/main/CHANGELOG.md)
+
+            ---
+            🤖 This issue was automatically created by the taxonomy update checker.
+            `
+            });
+
+            console.log(`Created issue for taxonomy update to ${latest}`);
