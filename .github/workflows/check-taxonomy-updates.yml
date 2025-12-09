@@ -16,8 +16,8 @@ jobs:
       - name: Get current taxonomy version
         id: current
         run: |
-          # Extract version from taxonomy.json (first line contains version info)
-          CURRENT_VERSION=$(head -1 data/taxonomy.json | grep -oP '"\d{4}-\d{2}"' | tr -d '"' || echo "unknown")
+          # Extract version from taxonomy.json using jq
+          CURRENT_VERSION=$(jq -r '.version' data/taxonomy.json)
           echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           echo "Current version: $CURRENT_VERSION"
 
