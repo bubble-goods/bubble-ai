@@ -1,0 +1,46 @@
+{
+  "name": "bubble-ai",
+  "version": "1.0.0",
+  "description": "AI/ML utilities for Bubble Goods - taxonomy embeddings, categorization, and more",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "populate-embeddings": "tsx scripts/populate-embeddings.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bubble-goods/bubble-ai.git"
+  },
+  "keywords": [
+    "shopify",
+    "taxonomy",
+    "embeddings",
+    "ai",
+    "categorization"
+  ],
+  "author": "Bubble Goods",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bubble-goods/bubble-ai/issues"
+  },
+  "homepage": "https://github.com/bubble-goods/bubble-ai#readme",
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.8",
+    "@types/node": "^24.10.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.15"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.87.1",
+    "openai": "^6.10.0"
+  }
+}
