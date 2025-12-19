@@ -1,0 +1,46 @@
+{
+  "name": "@bubble-ai/classifier",
+  "version": "1.0.0",
+  "description": "Shopify product taxonomy classifier using embeddings and LLM",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "data",
+    "prompts"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo 'Run lint from root'",
+    "lint:fix": "echo 'Run lint:fix from root'"
+  },
+  "keywords": [
+    "shopify",
+    "taxonomy",
+    "classifier",
+    "categorization",
+    "llm"
+  ],
+  "author": "Bubble Goods",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@bubble-ai/taxonomy": "*"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.8",
+    "@types/node": "^24.10.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.15"
+  }
+}
