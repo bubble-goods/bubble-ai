@@ -32,3 +32,6 @@ result
 
 # Supabase
 supabase/.temp/
+
+# Turbo
+.turbo/

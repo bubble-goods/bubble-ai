@@ -27,7 +27,7 @@ import 'dotenv/config'
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
-import { loadTaxonomyFull } from '../src/taxonomy/loader.js'
+import { loadTaxonomyFull } from '@bubble-ai/taxonomy'
 
 // Configuration
 const EMBEDDING_MODEL = 'text-embedding-3-small'

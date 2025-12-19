@@ -3,7 +3,8 @@
   "vcs": {
     "enabled": true,
     "clientKind": "git",
-    "useIgnoreFile": true
+    "useIgnoreFile": true,
+    "root": "."
   },
   "assist": {
     "actions": {
@@ -30,6 +31,6 @@
     }
   },
   "files": {
-    "includes": ["src/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts"]
+    "includes": ["packages/**/*.ts"]
   }
 }
