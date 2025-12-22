@@ -17,6 +17,15 @@
       "dependsOn": ["^build"]
     },
     "lint": {},
-    "lint:fix": {}
+    "lint:fix": {},
+    "dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
+    "deploy": {
+      "dependsOn": ["^build"],
+      "cache": false
+    }
   }
 }

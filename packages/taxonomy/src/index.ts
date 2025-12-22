@@ -19,6 +19,7 @@ export {
   clearCaches,
   extractCategoryCode,
   getTaxonomyVersion,
+  initTaxonomyFromData,
   loadAttributesIndex,
   loadTaxonomy,
   loadTaxonomyFull,

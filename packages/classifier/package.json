@@ -22,26 +22,35 @@
     "test:run": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "echo 'Run lint from root'",
-    "lint:fix": "echo 'Run lint:fix from root'"
+    "lint:fix": "echo 'Run lint:fix from root'",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "tail": "wrangler tail"
   },
   "keywords": [
     "shopify",
     "taxonomy",
     "classifier",
     "categorization",
-    "llm"
+    "llm",
+    "cloudflare-workers"
   ],
   "author": "Bubble Goods",
   "license": "MIT",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "@bubble-ai/taxonomy": "*",
-    "openai": "^6.10.0"
+    "hono": "^4.6.0",
+    "openai": "^6.10.0",
+    "zod": "^3.24.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.8",
+    "@cloudflare/workers-types": "^4.20241218.0",
     "@types/node": "^24.10.2",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.15"
+    "vitest": "^4.0.15",
+    "wrangler": "^3.99.0"
   }
 }

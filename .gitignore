@@ -35,3 +35,7 @@ supabase/.temp/
 
 # Turbo
 .turbo/
+
+# Cloudflare Workers
+.dev.vars
+.wrangler/

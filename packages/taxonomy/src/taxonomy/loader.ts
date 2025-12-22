@@ -1,14 +1,8 @@
-import { readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import type {
   TaxonomyAttribute,
   TaxonomyCategory,
   TaxonomyData,
 } from './types.js'
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const DATA_DIR = join(__dirname, '../../data')
 
 // Cached data (loaded once per process)
 let taxonomyCache: Map<string, string> | null = null
@@ -17,6 +11,86 @@ let fullTaxonomyCache: Map<string, TaxonomyCategory> | null = null
 let attributesCache: Map<string, TaxonomyAttribute> | null = null
 let taxonomyVersion: string | null = null
 
+// Flag to track if we're initialized from bundled data (Workers mode)
+let initializedFromData = false
+
+/**
+ * Initialize taxonomy from pre-loaded data (for Cloudflare Workers).
+ * Call this before using any taxonomy functions in a Worker environment.
+ */
+export function initTaxonomyFromData(
+  categoriesText: string,
+  taxonomyData: TaxonomyData,
+): void {
+  // Parse categories.txt content
+  taxonomyCache = new Map()
+  for (const line of categoriesText.split('\n')) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) continue
+
+    const match = trimmed.match(
+      /^(gid:\/\/shopify\/TaxonomyCategory\/[\w-]+)\s*:\s*(.+)$/,
+    )
+    if (match) {
+      const [, gid, categoryPath] = match
+      taxonomyCache.set(categoryPath.trim(), gid)
+    }
+  }
+
+  // Build reverse taxonomy
+  reverseTaxonomyCache = new Map()
+  for (const [path, gid] of taxonomyCache) {
+    reverseTaxonomyCache.set(gid, path)
+  }
+
+  // Parse taxonomy.json content
+  fullTaxonomyCache = new Map()
+  taxonomyVersion = taxonomyData.version
+
+  for (const vertical of taxonomyData.verticals) {
+    for (const category of vertical.categories) {
+      const code = extractCategoryCode(category.id)
+      if (code) {
+        fullTaxonomyCache.set(code, category)
+      }
+    }
+  }
+
+  // Parse attributes
+  attributesCache = new Map()
+  if (taxonomyData.attributes) {
+    for (const attr of taxonomyData.attributes) {
+      if (attr.handle) {
+        attributesCache.set(attr.handle, attr)
+      }
+    }
+  }
+
+  initializedFromData = true
+}
+
+/**
+ * Helper to get data directory path (Node.js only).
+ */
+function getDataDir(): string {
+  // Dynamic imports to avoid bundling issues in Workers
+  const { readFileSync } = require('node:fs')
+  const { dirname, join } = require('node:path')
+  const { fileURLToPath } = require('node:url')
+
+  const __dirname = dirname(fileURLToPath(import.meta.url))
+  return join(__dirname, '../../data')
+}
+
+/**
+ * Read file from data directory (Node.js only).
+ */
+function readDataFile(filename: string): string {
+  const { readFileSync } = require('node:fs')
+  const { join } = require('node:path')
+  return readFileSync(join(getDataDir(), filename), 'utf-8')
+}
+
 /**
  * Load taxonomy from categories.txt (cached).
  * Maps category paths to GIDs.
@@ -24,8 +98,15 @@ let taxonomyVersion: string | null = null
 export function loadTaxonomy(): Map<string, string> {
   if (taxonomyCache) return taxonomyCache
 
+  // In Workers, must be initialized via initTaxonomyFromData first
+  if (typeof require === 'undefined') {
+    throw new Error(
+      'Taxonomy not initialized. Call initTaxonomyFromData() first in Worker environments.',
+    )
+  }
+
   taxonomyCache = new Map()
-  const content = readFileSync(join(DATA_DIR, 'categories.txt'), 'utf-8')
+  const content = readDataFile('categories.txt')
 
   for (const line of content.split('\n')) {
     const trimmed = line.trim()
@@ -66,8 +147,15 @@ export function loadTaxonomyReverse(): Map<string, string> {
 export function loadTaxonomyFull(): Map<string, TaxonomyCategory> {
   if (fullTaxonomyCache) return fullTaxonomyCache
 
+  // In Workers, must be initialized via initTaxonomyFromData first
+  if (typeof require === 'undefined') {
+    throw new Error(
+      'Taxonomy not initialized. Call initTaxonomyFromData() first in Worker environments.',
+    )
+  }
+
   fullTaxonomyCache = new Map()
-  const content = readFileSync(join(DATA_DIR, 'taxonomy.json'), 'utf-8')
+  const content = readDataFile('taxonomy.json')
   const data: TaxonomyData = JSON.parse(content)
 
   taxonomyVersion = data.version
@@ -90,8 +178,15 @@ export function loadTaxonomyFull(): Map<string, TaxonomyCategory> {
 export function loadAttributesIndex(): Map<string, TaxonomyAttribute> {
   if (attributesCache) return attributesCache
 
+  // In Workers, must be initialized via initTaxonomyFromData first
+  if (typeof require === 'undefined') {
+    throw new Error(
+      'Taxonomy not initialized. Call initTaxonomyFromData() first in Worker environments.',
+    )
+  }
+
   attributesCache = new Map()
-  const content = readFileSync(join(DATA_DIR, 'taxonomy.json'), 'utf-8')
+  const content = readDataFile('taxonomy.json')
   const data: TaxonomyData = JSON.parse(content)
 
   if (data.attributes) {
@@ -120,7 +215,14 @@ export function extractCategoryCode(gid: string): string | null {
 export function getTaxonomyVersion(): string {
   if (taxonomyVersion) return taxonomyVersion
 
-  const content = readFileSync(join(DATA_DIR, 'taxonomy.json'), 'utf-8')
+  // In Workers, must be initialized via initTaxonomyFromData first
+  if (typeof require === 'undefined') {
+    throw new Error(
+      'Taxonomy not initialized. Call initTaxonomyFromData() first in Worker environments.',
+    )
+  }
+
+  const content = readDataFile('taxonomy.json')
   const data: TaxonomyData = JSON.parse(content)
   taxonomyVersion = data.version
 
