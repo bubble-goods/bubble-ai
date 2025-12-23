@@ -5,6 +5,8 @@ export interface EmbeddingSearchOptions {
   matchThreshold?: number
   matchCount?: number
   filterLevel?: number | null
+  /** Filter categories by code prefix (e.g., 'fb-' for food categories) */
+  categoryPrefix?: string | null
 }
 
 /**
@@ -15,15 +17,35 @@ export async function matchTaxonomyCategories(
   queryEmbedding: number[],
   options: EmbeddingSearchOptions = {},
 ): Promise<CategorySearchResult[]> {
-  const { matchThreshold = 0.5, matchCount = 5, filterLevel = null } = options
+  const {
+    matchThreshold = 0.5,
+    matchCount = 5,
+    filterLevel = null,
+    categoryPrefix = null,
+  } = options
 
   const supabase = getSupabase()
+
+  console.log('[DEBUG taxonomy] Calling match_categories RPC with:', {
+    matchThreshold,
+    matchCount,
+    filterLevel,
+    categoryPrefix,
+    embeddingLength: queryEmbedding.length,
+  })
 
   const { data, error } = await supabase.rpc('match_categories', {
     query_embedding: queryEmbedding,
     match_threshold: matchThreshold,
     match_count: matchCount,
     filter_level: filterLevel,
+    category_prefix: categoryPrefix,
+  })
+
+  console.log('[DEBUG taxonomy] RPC response:', {
+    error: error?.message ?? null,
+    dataLength: data?.length ?? 0,
+    data: data?.slice(0, 2), // First 2 results for debugging
   })
 
   if (error) {

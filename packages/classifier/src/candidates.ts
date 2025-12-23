@@ -22,6 +22,9 @@ const EMBEDDING_DIMENSIONS = 1536
 /** Default number of embedding candidates to retrieve */
 const DEFAULT_MAX_CANDIDATES = 10
 
+/** Category prefix for food products (Food, Beverages & Tobacco) */
+const FOOD_CATEGORY_PREFIX = 'fb-'
+
 /**
  * Load ProductType mappings from the data file.
  */
@@ -91,14 +94,22 @@ export async function getCandidatesFromEmbeddings(
   const searchText = buildSearchText(input)
 
   try {
-    // Generate embedding for search text
-    const embedding = await generateEmbedding(searchText)
+    console.log('[DEBUG] Building search text...')
+    console.log('[DEBUG] Search text:', searchText)
 
-    // Search for similar categories
+    // Generate embedding for search text
+    console.log('[DEBUG] Generating embedding...')
+    const embedding = await generateEmbedding(searchText)
+    console.log('[DEBUG] Embedding generated, length:', embedding.length)
+
+    // Search for similar categories (filtered to food categories only)
+    console.log('[DEBUG] Searching taxonomy categories...')
     const results = await matchTaxonomyCategories(embedding, {
       matchCount: maxCandidates,
       filterLevel: maxDepth ?? null,
+      categoryPrefix: FOOD_CATEGORY_PREFIX,
     })
+    console.log('[DEBUG] Search results:', results.length, 'matches')
 
     return results.map((r) => ({
       code: r.categoryCode,
@@ -109,21 +120,23 @@ export async function getCandidatesFromEmbeddings(
     }))
   } catch (error) {
     // If embeddings aren't available, return empty
-    console.warn('Embedding search failed:', error)
+    console.error('[ERROR] Embedding search failed:', error)
     return []
   }
 }
 
 /**
  * Build search text from classification input.
- * Combines title, description, and other fields for embedding search.
+ * Combines title, description, and tags for embedding search.
+ *
+ * NOTE: ProductType is intentionally excluded to avoid biasing embedding search.
+ * ProductType is often a broad merchant-assigned label (e.g., "Bakery") that may
+ * not reflect where customers would look for the product. We want semantic matching
+ * based on what the product actually is, not how the merchant categorized it.
+ * ProductType is still passed to the LLM as context for its decision.
  */
 export function buildSearchText(input: ClassificationInput): string {
   const parts: string[] = [input.title]
-
-  if (input.productType) {
-    parts.push(input.productType)
-  }
 
   if (input.description) {
     // Strip HTML and truncate description
@@ -137,11 +150,36 @@ export function buildSearchText(input: ClassificationInput): string {
     }
   }
 
+  // Include only product-descriptive tags, not marketing tags
   if (input.tags && input.tags.length > 0) {
-    parts.push(input.tags.slice(0, 5).join(' '))
+    const productTags = input.tags
+      .filter((t) => !isMarketingTag(t))
+      .slice(0, 5)
+    if (productTags.length > 0) {
+      parts.push(productTags.join(' '))
+    }
   }
 
   return parts.join(' | ')
+}
+
+/**
+ * Check if a tag is primarily for marketing rather than product description.
+ * Marketing tags shouldn't influence category embedding search.
+ */
+function isMarketingTag(tag: string): boolean {
+  const marketingPatterns = [
+    /^staff.?pick$/i,
+    /^best.?seller$/i,
+    /^new$/i,
+    /^sale$/i,
+    /^featured$/i,
+    /^trending$/i,
+    /^popular$/i,
+    /^limited$/i,
+    /^exclusive$/i,
+  ]
+  return marketingPatterns.some((pattern) => pattern.test(tag.trim()))
 }
 
 /**
@@ -171,6 +209,10 @@ export async function getCandidates(
     input,
     maxCandidates,
     maxDepth,
+  )
+  console.log(
+    '[DEBUG] Embedding candidates:',
+    JSON.stringify(embeddingCandidates, null, 2),
   )
   candidates.push(...embeddingCandidates)
 

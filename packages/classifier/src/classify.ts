@@ -83,6 +83,16 @@ export async function classify(
   const systemPrompt = buildClassificationSystemPrompt()
   const userPrompt = buildClassificationUserPrompt(input, candidates)
 
+  // Debug: log candidates being sent to LLM
+  console.log(
+    '[DEBUG] Candidates for LLM:',
+    JSON.stringify(
+      candidates.map((c) => ({ code: c.code, path: c.path, score: c.score })),
+      null,
+      2,
+    ),
+  )
+
   const response = await client.messages.create({
     model: MODEL_MAP[cfg.model],
     max_tokens: 500,

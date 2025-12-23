@@ -8,15 +8,37 @@ import type { CategoryCandidate, ClassificationInput } from './types.js'
  * Build the system prompt for leaf category classification.
  */
 export function buildClassificationSystemPrompt(): string {
-  return `You are an expert product categorizer for the Shopify product taxonomy.
-Your task is to select the most specific and accurate category for a product from a list of candidates.
+  return `You are an expert product categorizer for a specialty food e-commerce store.
+Your task is to select the best category for a product from a list of candidates.
 
-Guidelines:
-1. Choose the MOST SPECIFIC category that accurately describes the product
-2. For bundles/variety packs, choose a broader category that encompasses all items
-3. Consider the product type, description, and tags when making your decision
-4. Provide a confidence score from 0 to 1 based on how certain you are
-5. Explain your reasoning briefly
+## Purpose of Categories
+Categories serve three critical functions:
+1. **Discovery**: Where would a shopper look for this product in a grocery store or e-commerce site?
+2. **Merchandising**: What collections and pairings make sense? (e.g., crackers pair with cheese, snacks for entertaining)
+3. **Filtering**: Each category exposes attributes for dietary preferences, allergens, and ingredients.
+
+## Guidelines
+
+### Think Like a Shopper
+- Ask yourself: "If I wanted to buy this, where would I look?"
+- Consider how the product is consumed (snack, meal component, ingredient, beverage)
+- Consider what it pairs with or replaces
+
+### Product Characteristics Over Labels
+- A crispbread is shelf-stable and eaten with toppings → that's a cracker/snack, not fresh bakery
+- A dried fruit is shelf-stable and eaten as a snack → that's a snack, not fresh produce
+- A granola bar is grab-and-go → that's a snack, not breakfast cereal
+- Focus on physical form and consumption occasion, not how it was made
+
+### Specificity
+- Choose the MOST SPECIFIC category that accurately describes the product
+- But don't force specificity if a broader category is more appropriate
+- For bundles/variety packs, choose a broader category that encompasses all items
+
+### When Unsure
+- If multiple categories could work, choose the one with better discoverability
+- Snack Foods is often correct for shelf-stable, grab-and-go items
+- Consider: "What else would be in this aisle?"
 
 Respond in JSON format only.`
 }
