@@ -137,39 +137,33 @@ export function detectBundle(input: ClassificationInput): BundleDetection {
 
 /**
  * Analyze variants for signals that indicate this is a bundle product.
+ *
+ * Note: Pack-size indicators alone (2-pack, 4-pack) do NOT indicate a bundle.
+ * These are just quantity options for the same product.
+ * A true bundle has different products/flavors within it (e.g., "Variety Pack: Cookie, Cracker, Brownie").
  */
 function detectVariantBundleSignals(
   variants: NonNullable<ClassificationInput['variants']>,
 ): string[] {
   const signals: string[] = []
 
-  // Multiple distinct product flavors/types in variants might indicate variety pack
-  if (variants.length >= 3) {
-    const uniqueTitles = new Set(
-      variants.map((v) => v.title?.toLowerCase()).filter(Boolean),
-    )
+  // Pattern to identify pack-size-only variants (e.g., "2-pack", "4-pack", "6 count")
+  const packSizeOnlyPattern = /^(\d+)\s*-?\s*(pack|count|ct|pc|pieces?|pk)$/i
 
-    // If variant titles suggest different products (not just sizes)
-    if (uniqueTitles.size >= 3) {
-      const sizePatterns =
-        /^(small|medium|large|xs|s|m|l|xl|xxl|\d+\s*(oz|g|ml|lb|kg))$/i
-      const nonSizeVariants = [...uniqueTitles].filter(
-        (t) => t && !sizePatterns.test(t),
-      )
+  // Pattern to identify size-only variants (e.g., "small", "8oz")
+  const sizeOnlyPattern =
+    /^(small|medium|large|xs|s|m|l|xl|xxl|\d+\s*(oz|g|ml|lb|kg))$/i
 
-      if (nonSizeVariants.length >= 3) {
-        signals.push(`${nonSizeVariants.length} distinct variant types`)
-      }
-    }
-  }
+  // Get variant titles, excluding pack-size-only and size-only variants
+  const meaningfulVariants = variants
+    .map((v) => v.title?.toLowerCase().trim())
+    .filter(Boolean)
+    .filter((t) => t && !packSizeOnlyPattern.test(t) && !sizeOnlyPattern.test(t))
 
-  // Check for pack size indicators in variant titles
-  const packPatterns = /(\d+)\s*-?\s*(pack|count|ct|pc|pieces?)/i
-  for (const variant of variants) {
-    if (variant.title && packPatterns.test(variant.title)) {
-      signals.push('variant has pack-size indicator')
-      break
-    }
+  // If there are 3+ distinct meaningful variants, this might be a variety bundle
+  const uniqueMeaningfulVariants = new Set(meaningfulVariants)
+  if (uniqueMeaningfulVariants.size >= 3) {
+    signals.push(`${uniqueMeaningfulVariants.size} distinct product variants`)
   }
 
   return signals

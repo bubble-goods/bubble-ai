@@ -96,7 +96,8 @@ describe('detectBundle', () => {
     expect(result.isBundle).toBe(false)
   })
 
-  it('detects pack-size indicators in variants', () => {
+  it('does NOT flag pack-size-only variants as bundle', () => {
+    // Pack-size variants (2-pack, 6-pack) are quantity options, not variety bundles
     const input: ClassificationInput = {
       title: 'Granola Bars',
       variants: [
@@ -106,7 +107,8 @@ describe('detectBundle', () => {
       ],
     }
     const result = detectBundle(input)
-    expect(result.signals.some((s) => s.includes('pack-size'))).toBe(true)
+    expect(result.isBundle).toBe(false)
+    expect(result.signals.length).toBe(0)
   })
 
   it('combines multiple signals for higher confidence', () => {
