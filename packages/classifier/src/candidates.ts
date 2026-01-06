@@ -25,6 +25,9 @@ const DEFAULT_MAX_CANDIDATES = 10
 /** Category prefix for food products (Food, Beverages & Tobacco) */
 const FOOD_CATEGORY_PREFIX = 'fb-'
 
+/** Similarity threshold for embedding matches (lowered from 0.5 to capture more food categories) */
+const EMBEDDING_MATCH_THRESHOLD = 0.3
+
 /**
  * Load ProductType mappings from the data file.
  */
@@ -105,6 +108,7 @@ export async function getCandidatesFromEmbeddings(
     // Search for similar categories (filtered to food categories only)
     console.log('[DEBUG] Searching taxonomy categories...')
     const results = await matchTaxonomyCategories(embedding, {
+      matchThreshold: EMBEDDING_MATCH_THRESHOLD,
       matchCount: maxCandidates,
       filterLevel: maxDepth ?? null,
       categoryPrefix: FOOD_CATEGORY_PREFIX,
@@ -199,8 +203,10 @@ export async function getCandidates(
 
   // Try ProductType mapping first
   const mapping = findProductTypeMapping(input.productType, mappings)
+  console.log('[DEBUG] ProductType:', input.productType, '-> Mapping:', mapping?.categoryCode ?? 'none')
   if (mapping) {
     const productTypeCandidates = getCandidatesFromProductType(mapping)
+    console.log('[DEBUG] ProductType candidates:', productTypeCandidates)
     candidates.push(...productTypeCandidates)
   }
 

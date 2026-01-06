@@ -79,6 +79,11 @@
       "notes": "Food Items > Condiments & Sauces"
     },
     {
+      "productType": "Hot Sauce",
+      "categoryCode": "fb-2-4-8",
+      "notes": "Food Items > Condiments & Sauces > Hot Sauce"
+    },
+    {
       "productType": "Condiments",
       "categoryCode": "fb-2-4",
       "notes": "Food Items > Condiments & Sauces"

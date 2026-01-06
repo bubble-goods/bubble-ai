@@ -34,12 +34,15 @@ export async function matchTaxonomyCategories(
     embeddingLength: queryEmbedding.length,
   })
 
+  // Note: category_prefix filtering is done client-side since the RPC function
+  // doesn't support it yet. Request more results if filtering to ensure we get enough.
+  const requestCount = categoryPrefix ? matchCount * 3 : matchCount
+
   const { data, error } = await supabase.rpc('match_categories', {
     query_embedding: queryEmbedding,
     match_threshold: matchThreshold,
-    match_count: matchCount,
+    match_count: requestCount,
     filter_level: filterLevel,
-    category_prefix: categoryPrefix,
   })
 
   console.log('[DEBUG taxonomy] RPC response:', {
@@ -52,7 +55,18 @@ export async function matchTaxonomyCategories(
     throw new Error(`Supabase RPC error: ${error.message}`)
   }
 
-  return (data ?? []).map(
+  // Filter by category prefix if specified (client-side filtering)
+  let results = data ?? []
+  if (categoryPrefix) {
+    results = results.filter((row: { category_code: string }) =>
+      row.category_code.startsWith(categoryPrefix)
+    )
+  }
+
+  // Limit to requested count after filtering
+  results = results.slice(0, matchCount)
+
+  return results.map(
     (row: {
       category_code: string
       category_name: string
