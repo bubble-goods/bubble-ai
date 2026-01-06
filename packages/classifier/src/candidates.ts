@@ -4,7 +4,6 @@
  */
 
 import {
-  getCategoryByCode,
   matchTaxonomyCategories,
   type TaxonomyCategory,
 } from '@bubble-ai/taxonomy'
@@ -23,7 +22,6 @@ const FOOD_CATEGORY_PREFIX = 'fb-'
 
 /** Similarity threshold for embedding matches (lowered from 0.5 to capture more food categories) */
 const EMBEDDING_MATCH_THRESHOLD = 0.3
-
 
 /**
  * Generate embedding for text using OpenAI.
@@ -103,9 +101,7 @@ export function buildSearchText(input: ClassificationInput): string {
 
   // Include a few key tags that describe the product type (not marketing tags)
   if (input.tags && input.tags.length > 0) {
-    const productTags = input.tags
-      .filter((t) => !isMarketingTag(t))
-      .slice(0, 3) // Fewer tags to keep search focused
+    const productTags = input.tags.filter((t) => !isMarketingTag(t)).slice(0, 3) // Fewer tags to keep search focused
     if (productTags.length > 0) {
       parts.push(productTags.join(' '))
     }
@@ -147,7 +143,11 @@ export async function getCandidates(
   const { maxCandidates = DEFAULT_MAX_CANDIDATES, maxDepth } = options
 
   // Get embedding candidates
-  const candidates = await getCandidatesFromEmbeddings(input, maxCandidates, maxDepth)
+  const candidates = await getCandidatesFromEmbeddings(
+    input,
+    maxCandidates,
+    maxDepth,
+  )
   console.log(
     '[DEBUG] Embedding candidates:',
     JSON.stringify(candidates, null, 2),
@@ -160,7 +160,7 @@ export async function getCandidates(
 /**
  * Deduplicate candidates, keeping the highest score for each code.
  */
-function deduplicateCandidates(
+function _deduplicateCandidates(
   candidates: CategoryCandidate[],
 ): CategoryCandidate[] {
   const byCode = new Map<string, CategoryCandidate>()

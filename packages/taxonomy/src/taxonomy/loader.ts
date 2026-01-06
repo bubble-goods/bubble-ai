@@ -1,11 +1,11 @@
+import { createRequire } from 'node:module'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import type {
   TaxonomyAttribute,
   TaxonomyCategory,
   TaxonomyData,
 } from './types.js'
-import { createRequire } from 'node:module'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 // ESM-compatible require for file reading in Node.js
 const __filename = fileURLToPath(import.meta.url)
@@ -20,7 +20,7 @@ let attributesCache: Map<string, TaxonomyAttribute> | null = null
 let taxonomyVersion: string | null = null
 
 // Flag to track if we're initialized from bundled data (Workers mode)
-let initializedFromData = false
+let _initializedFromData = false
 
 /**
  * Initialize taxonomy from pre-loaded data (for Cloudflare Workers).
@@ -74,7 +74,7 @@ export function initTaxonomyFromData(
     }
   }
 
-  initializedFromData = true
+  _initializedFromData = true
 }
 
 /**

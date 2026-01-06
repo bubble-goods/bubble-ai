@@ -158,7 +158,9 @@ function detectVariantBundleSignals(
   const meaningfulVariants = variants
     .map((v) => v.title?.toLowerCase().trim())
     .filter(Boolean)
-    .filter((t) => t && !packSizeOnlyPattern.test(t) && !sizeOnlyPattern.test(t))
+    .filter(
+      (t) => t && !packSizeOnlyPattern.test(t) && !sizeOnlyPattern.test(t),
+    )
 
   // If there are 3+ distinct meaningful variants, this might be a variety bundle
   const uniqueMeaningfulVariants = new Set(meaningfulVariants)

@@ -82,7 +82,10 @@ export async function matchTaxonomyCategories(
       }
     }
 
-    if (!Array.isArray(embedding) || embedding.length !== queryEmbedding.length) {
+    if (
+      !Array.isArray(embedding) ||
+      embedding.length !== queryEmbedding.length
+    ) {
       continue
     }
 
