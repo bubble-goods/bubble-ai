@@ -39,3 +39,9 @@ supabase/.temp/
 # Cloudflare Workers
 .dev.vars
 .wrangler/
+
+# Claude Code
+.claude/settings.local.json
+
+# Calibration results (test output)
+packages/classifier/calibration-results-*.json
