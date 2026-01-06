@@ -75,10 +75,6 @@ function formatProductInfo(input: ClassificationInput): string {
 
   lines.push(`**Title:** ${input.title}`)
 
-  if (input.productType) {
-    lines.push(`**Product Type:** ${input.productType}`)
-  }
-
   if (input.description) {
     const cleanDesc = input.description
       .replace(/<[^>]*>/g, ' ')

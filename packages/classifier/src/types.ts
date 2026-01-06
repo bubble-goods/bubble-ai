@@ -82,8 +82,6 @@ export interface AttributeAssignment {
 export interface ClassificationSignals {
   /** Whether the product appears to be a bundle/variety pack */
   isBundle: boolean
-  /** ProductType mapping match, if any */
-  productTypeMatch?: string
   /** Top embedding similarity match */
   embeddingTopMatch?: string
   /** Embedding similarity score (0-1) */
@@ -104,7 +102,7 @@ export interface ProductTypeMapping {
 }
 
 /**
- * Candidate category from embedding search or ProductType mapping.
+ * Candidate category from embedding search.
  */
 export interface CategoryCandidate {
   /** Category code */
@@ -114,7 +112,7 @@ export interface CategoryCandidate {
   /** Category level (0-7) */
   level: number
   /** Source of this candidate */
-  source: 'embedding' | 'productType' | 'manual'
+  source: 'embedding' | 'manual'
   /** Relevance score (0-1) */
   score: number
 }

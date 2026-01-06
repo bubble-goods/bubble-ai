@@ -13,9 +13,8 @@ export const DEFAULT_CONFIDENCE_THRESHOLD = 0.85
 
 /** Weights for combining confidence signals */
 const WEIGHTS = {
-  llmConfidence: 0.5,
-  embeddingScore: 0.25,
-  productTypeMatch: 0.15,
+  llmConfidence: 0.6,
+  embeddingScore: 0.3,
   bundleAdjustment: 0.1,
 }
 
@@ -25,15 +24,9 @@ const WEIGHTS = {
 export function calculateConfidence(params: {
   llmConfidence: number
   embeddingScore?: number
-  hasProductTypeMatch: boolean
   bundleDetection?: BundleDetection
 }): number {
-  const {
-    llmConfidence,
-    embeddingScore,
-    hasProductTypeMatch,
-    bundleDetection,
-  } = params
+  const { llmConfidence, embeddingScore, bundleDetection } = params
 
   let score = 0
 
@@ -43,11 +36,6 @@ export function calculateConfidence(params: {
   // Embedding similarity score
   if (embeddingScore !== undefined) {
     score += embeddingScore * WEIGHTS.embeddingScore
-  }
-
-  // ProductType match bonus
-  if (hasProductTypeMatch) {
-    score += WEIGHTS.productTypeMatch
   }
 
   // Bundle adjustment - slight penalty for bundles (harder to classify precisely)
@@ -74,14 +62,12 @@ export function needsReview(
  */
 export function buildSignals(params: {
   bundleDetection: BundleDetection
-  productTypeMatch: string | null
   topCandidate: CategoryCandidate | null
 }): ClassificationSignals {
-  const { bundleDetection, productTypeMatch, topCandidate } = params
+  const { bundleDetection, topCandidate } = params
 
   return {
     isBundle: bundleDetection.isBundle,
-    productTypeMatch: productTypeMatch ?? undefined,
     embeddingTopMatch: topCandidate?.path,
     embeddingScore: topCandidate?.score,
   }

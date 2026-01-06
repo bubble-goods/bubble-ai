@@ -14,35 +14,20 @@ describe('calculateConfidence', () => {
   it('calculates confidence from LLM score', () => {
     const confidence = calculateConfidence({
       llmConfidence: 1.0,
-      hasProductTypeMatch: false,
     })
-    // LLM weight is 0.5
-    expect(confidence).toBeCloseTo(0.5, 1)
+    // LLM weight is 0.6
+    expect(confidence).toBeCloseTo(0.6, 1)
   })
 
   it('adds embedding score contribution', () => {
     const withoutEmbedding = calculateConfidence({
       llmConfidence: 0.8,
-      hasProductTypeMatch: false,
     })
     const withEmbedding = calculateConfidence({
       llmConfidence: 0.8,
       embeddingScore: 0.9,
-      hasProductTypeMatch: false,
     })
     expect(withEmbedding).toBeGreaterThan(withoutEmbedding)
-  })
-
-  it('adds productType match bonus', () => {
-    const without = calculateConfidence({
-      llmConfidence: 0.8,
-      hasProductTypeMatch: false,
-    })
-    const with_ = calculateConfidence({
-      llmConfidence: 0.8,
-      hasProductTypeMatch: true,
-    })
-    expect(with_).toBeGreaterThan(without)
   })
 
   it('applies bundle penalty', () => {
@@ -54,12 +39,10 @@ describe('calculateConfidence', () => {
     }
     const withBundle = calculateConfidence({
       llmConfidence: 0.9,
-      hasProductTypeMatch: true,
       bundleDetection,
     })
     const without = calculateConfidence({
       llmConfidence: 0.9,
-      hasProductTypeMatch: true,
     })
     expect(withBundle).toBeLessThan(without)
   })
@@ -68,7 +51,6 @@ describe('calculateConfidence', () => {
     const max = calculateConfidence({
       llmConfidence: 1.0,
       embeddingScore: 1.0,
-      hasProductTypeMatch: true,
     })
     expect(max).toBeLessThanOrEqual(1)
     expect(max).toBeGreaterThanOrEqual(0)
@@ -114,12 +96,10 @@ describe('buildSignals', () => {
 
     const signals = buildSignals({
       bundleDetection,
-      productTypeMatch: 'Gift Box',
       topCandidate: candidate,
     })
 
     expect(signals.isBundle).toBe(true)
-    expect(signals.productTypeMatch).toBe('Gift Box')
     expect(signals.embeddingTopMatch).toBe('Food Items')
     expect(signals.embeddingScore).toBe(0.9)
   })
@@ -134,12 +114,10 @@ describe('buildSignals', () => {
 
     const signals = buildSignals({
       bundleDetection,
-      productTypeMatch: null,
       topCandidate: null,
     })
 
     expect(signals.isBundle).toBe(false)
-    expect(signals.productTypeMatch).toBeUndefined()
     expect(signals.embeddingTopMatch).toBeUndefined()
   })
 })

@@ -9,12 +9,9 @@ export {
 // Candidate selection
 export {
   buildSearchText,
-  findProductTypeMapping,
   getCandidates,
   getCandidatesFromEmbeddings,
-  getCandidatesFromProductType,
   getChildCandidates,
-  loadProductTypeMappings,
 } from './candidates.js'
 export { classify, classifyOffline, getSearchText } from './classify.js'
 
@@ -48,6 +45,5 @@ export type {
   ClassificationOutput,
   ClassificationSignals,
   ClassifierConfig,
-  ProductTypeMapping,
   ProductVariant,
 } from './types.js'

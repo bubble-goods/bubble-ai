@@ -5,11 +5,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { getAttributeByHandle, getCategoryByCode } from '@bubble-ai/taxonomy'
 import { detectBundle } from './bundles.js'
-import {
-  buildSearchText,
-  findProductTypeMapping,
-  getCandidates,
-} from './candidates.js'
+import { buildSearchText, getCandidates } from './candidates.js'
 import {
   adjustCategoryForBundle,
   buildSignals,
@@ -31,7 +27,6 @@ import type {
   ClassificationInput,
   ClassificationOutput,
   ClassifierConfig,
-  ProductTypeMapping,
 } from './types.js'
 
 /** Default classifier configuration */
@@ -54,7 +49,6 @@ const MODEL_MAP = {
  */
 export async function classify(
   input: ClassificationInput,
-  mappings: ProductTypeMapping[],
   config: ClassifierConfig = {},
 ): Promise<ClassificationOutput> {
   const cfg = { ...DEFAULT_CONFIG, ...config }
@@ -65,8 +59,8 @@ export async function classify(
     ? bundleDetection.recommendedMaxDepth
     : undefined
 
-  // Step 2: Get category candidates
-  const candidates = await getCandidates(input, mappings, {
+  // Step 2: Get category candidates from embedding search
+  const candidates = await getCandidates(input, {
     maxCandidates: cfg.maxCandidates,
     maxDepth,
   })
@@ -75,10 +69,7 @@ export async function classify(
     throw new Error('No category candidates found for product')
   }
 
-  // Step 3: Find ProductType mapping for signals
-  const productTypeMapping = findProductTypeMapping(input.productType, mappings)
-
-  // Step 4: Use LLM to select best category
+  // Step 3: Use LLM to select best category
   const client = new Anthropic()
   const systemPrompt = buildClassificationSystemPrompt()
   const userPrompt = buildClassificationUserPrompt(input, candidates)
@@ -108,7 +99,7 @@ export async function classify(
     throw new Error('Failed to parse LLM classification response')
   }
 
-  // Step 5: Validate selection
+  // Step 4: Validate selection
   const selectedCandidate = validateSelection(parsed.selectedCode, candidates)
   if (!selectedCandidate) {
     // Fall back to top candidate if LLM selected invalid code
@@ -120,21 +111,20 @@ export async function classify(
   const finalCode = selectedCandidate?.code ?? candidates[0].code
   const adjustedCode = adjustCategoryForBundle(finalCode, bundleDetection)
 
-  // Step 6: Get category details
+  // Step 5: Get category details
   const category = getCategoryByCode(adjustedCode)
   if (!category) {
     throw new Error(`Category not found: ${adjustedCode}`)
   }
 
-  // Step 7: Calculate confidence
+  // Step 6: Calculate confidence
   const confidence = calculateConfidence({
     llmConfidence: parsed.confidence,
     embeddingScore: candidates[0]?.score,
-    hasProductTypeMatch: productTypeMapping !== null,
     bundleDetection,
   })
 
-  // Step 8: Extract attributes if enabled
+  // Step 7: Extract attributes if enabled
   let attributes: AttributeAssignment[] = []
   if (cfg.extractAttributes && category.attributes) {
     attributes = await extractAttributes(
@@ -146,10 +136,9 @@ export async function classify(
     )
   }
 
-  // Step 9: Build final output
+  // Step 8: Build final output
   const signals = buildSignals({
     bundleDetection,
-    productTypeMatch: productTypeMapping?.productType ?? null,
     topCandidate: candidates[0] ?? null,
   })
 
@@ -228,11 +217,10 @@ async function extractAttributes(
 
 /**
  * Classify a product without calling the LLM (for testing/offline use).
- * Uses only embedding search and ProductType mapping.
+ * Uses only embedding search.
  */
 export async function classifyOffline(
   input: ClassificationInput,
-  mappings: ProductTypeMapping[],
   config: ClassifierConfig = {},
 ): Promise<ClassificationOutput> {
   const cfg = { ...DEFAULT_CONFIG, ...config }
@@ -242,7 +230,7 @@ export async function classifyOffline(
     ? bundleDetection.recommendedMaxDepth
     : undefined
 
-  const candidates = await getCandidates(input, mappings, {
+  const candidates = await getCandidates(input, {
     maxCandidates: cfg.maxCandidates,
     maxDepth,
   })
@@ -251,7 +239,6 @@ export async function classifyOffline(
     throw new Error('No category candidates found for product')
   }
 
-  const productTypeMapping = findProductTypeMapping(input.productType, mappings)
   const topCandidate = candidates[0]
   const adjustedCode = adjustCategoryForBundle(
     topCandidate.code,
@@ -266,13 +253,11 @@ export async function classifyOffline(
   const confidence = calculateConfidence({
     llmConfidence: 0.5, // No LLM confidence in offline mode
     embeddingScore: topCandidate.score,
-    hasProductTypeMatch: productTypeMapping !== null,
     bundleDetection,
   })
 
   const signals = buildSignals({
     bundleDetection,
-    productTypeMatch: productTypeMapping?.productType ?? null,
     topCandidate,
   })
 

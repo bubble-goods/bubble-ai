@@ -14,14 +14,12 @@ import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { z } from 'zod'
 // Import data files - will be bundled by Wrangler
-// @ts-expect-error - JSON imports work in Wrangler but need explicit attribute for Node
-import mappingsData from '../data/producttype-mappings.json'
 // @ts-expect-error - Text imports configured in wrangler.toml rules
 import categoriesText from '../../taxonomy/data/categories.txt'
 // @ts-expect-error - JSON imports work in Wrangler but need explicit attribute for Node
 import taxonomyJson from '../../taxonomy/data/taxonomy.json'
 import { classify } from './classify.js'
-import type { ClassificationInput, ProductTypeMapping } from './types.js'
+import type { ClassificationInput } from './types.js'
 
 // Flag to track if taxonomy is initialized
 let taxonomyInitialized = false
@@ -140,17 +138,8 @@ app.post('/classify', async (c) => {
       process.env.OPENAI_API_KEY = c.env.OPENAI_API_KEY
     }
 
-    // Get ProductType mappings
-    const mappings: ProductTypeMapping[] = (
-      mappingsData as { mappings: ProductTypeMapping[] }
-    ).mappings
-
     // Run classification
-    const result = await classify(
-      product as ClassificationInput,
-      mappings,
-      config,
-    )
+    const result = await classify(product as ClassificationInput, config)
 
     const duration = Date.now() - startTime
 
@@ -237,19 +226,11 @@ app.post('/classify/batch', async (c) => {
       process.env.OPENAI_API_KEY = c.env.OPENAI_API_KEY
     }
 
-    const mappings: ProductTypeMapping[] = (
-      mappingsData as { mappings: ProductTypeMapping[] }
-    ).mappings
-
     // Process products sequentially to avoid rate limits
     const results = []
     for (const product of products) {
       try {
-        const result = await classify(
-          product as ClassificationInput,
-          mappings,
-          config,
-        )
+        const result = await classify(product as ClassificationInput, config)
         results.push({ success: true, result })
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error'

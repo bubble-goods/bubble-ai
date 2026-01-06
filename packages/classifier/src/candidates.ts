@@ -1,6 +1,6 @@
 /**
  * Candidate selection for taxonomy classification.
- * Combines ProductType mappings and embedding search to find category candidates.
+ * Uses embedding search to find category candidates based on product content.
  */
 
 import {
@@ -9,11 +9,7 @@ import {
   type TaxonomyCategory,
 } from '@bubble-ai/taxonomy'
 import OpenAI from 'openai'
-import type {
-  CategoryCandidate,
-  ClassificationInput,
-  ProductTypeMapping,
-} from './types.js'
+import type { CategoryCandidate, ClassificationInput } from './types.js'
 
 /** Embedding model to use */
 const EMBEDDING_MODEL = 'text-embedding-3-small'
@@ -28,49 +24,6 @@ const FOOD_CATEGORY_PREFIX = 'fb-'
 /** Similarity threshold for embedding matches (lowered from 0.5 to capture more food categories) */
 const EMBEDDING_MATCH_THRESHOLD = 0.3
 
-/**
- * Load ProductType mappings from the data file.
- */
-export function loadProductTypeMappings(): ProductTypeMapping[] {
-  // Dynamic import not needed - we can import JSON directly
-  // For now, return empty array - will be populated from file
-  return []
-}
-
-/**
- * Find a ProductType mapping for the given input.
- */
-export function findProductTypeMapping(
-  productType: string | undefined,
-  mappings: ProductTypeMapping[],
-): ProductTypeMapping | null {
-  if (!productType) return null
-
-  const normalized = productType.toLowerCase().trim()
-  return (
-    mappings.find((m) => m.productType.toLowerCase() === normalized) ?? null
-  )
-}
-
-/**
- * Get candidates from ProductType mapping.
- */
-export function getCandidatesFromProductType(
-  mapping: ProductTypeMapping,
-): CategoryCandidate[] {
-  const category = getCategoryByCode(mapping.categoryCode)
-  if (!category) return []
-
-  return [
-    {
-      code: mapping.categoryCode,
-      path: category.full_name,
-      level: category.level,
-      source: 'productType',
-      score: 0.9, // High confidence for direct mapping
-    },
-  ]
-}
 
 /**
  * Generate embedding for text using OpenAI.
@@ -188,45 +141,26 @@ function isMarketingTag(tag: string): boolean {
 
 /**
  * Get all category candidates for classification.
- * Combines ProductType mappings and embedding search.
+ * Uses embedding search to find semantically similar categories.
  */
 export async function getCandidates(
   input: ClassificationInput,
-  mappings: ProductTypeMapping[],
   options: {
     maxCandidates?: number
     maxDepth?: number
   } = {},
 ): Promise<CategoryCandidate[]> {
   const { maxCandidates = DEFAULT_MAX_CANDIDATES, maxDepth } = options
-  const candidates: CategoryCandidate[] = []
-
-  // Try ProductType mapping first
-  const mapping = findProductTypeMapping(input.productType, mappings)
-  console.log('[DEBUG] ProductType:', input.productType, '-> Mapping:', mapping?.categoryCode ?? 'none')
-  if (mapping) {
-    const productTypeCandidates = getCandidatesFromProductType(mapping)
-    console.log('[DEBUG] ProductType candidates:', productTypeCandidates)
-    candidates.push(...productTypeCandidates)
-  }
 
   // Get embedding candidates
-  const embeddingCandidates = await getCandidatesFromEmbeddings(
-    input,
-    maxCandidates,
-    maxDepth,
-  )
+  const candidates = await getCandidatesFromEmbeddings(input, maxCandidates, maxDepth)
   console.log(
     '[DEBUG] Embedding candidates:',
-    JSON.stringify(embeddingCandidates, null, 2),
+    JSON.stringify(candidates, null, 2),
   )
-  candidates.push(...embeddingCandidates)
-
-  // Deduplicate by code, keeping highest score
-  const deduped = deduplicateCandidates(candidates)
 
   // Sort by score descending
-  return deduped.sort((a, b) => b.score - a.score).slice(0, maxCandidates)
+  return candidates.sort((a, b) => b.score - a.score).slice(0, maxCandidates)
 }
 
 /**
@@ -264,7 +198,7 @@ export function getChildCandidates(
         code,
         path: category.full_name,
         level: category.level,
-        source: 'productType',
+        source: 'manual',
         score: 0.7, // Lower score for children
       })
     }
