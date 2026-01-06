@@ -15,8 +15,8 @@ describe('calculateConfidence', () => {
     const confidence = calculateConfidence({
       llmConfidence: 1.0,
     })
-    // LLM weight is 0.6
-    expect(confidence).toBeCloseTo(0.6, 1)
+    // LLM weight is 0.85
+    expect(confidence).toBeCloseTo(0.85, 1)
   })
 
   it('adds embedding score contribution', () => {
