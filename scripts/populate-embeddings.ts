@@ -1,5 +1,14 @@
 #!/usr/bin/env npx tsx
 import 'dotenv/config'
+import { config } from 'dotenv'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+// Also load from classifier's .dev.vars if available
+config({ path: join(__dirname, '..', 'packages', 'classifier', '.dev.vars') })
 
 /**
  * Populate Supabase with Shopify taxonomy embeddings.
@@ -28,6 +37,7 @@ import 'dotenv/config'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
 import { loadTaxonomyFull } from '@bubble-ai/taxonomy'
+import { generateEnrichedText } from './category-enrichments.js'
 
 // Configuration
 const EMBEDDING_MODEL = 'text-embedding-3-small'
@@ -59,7 +69,8 @@ function initOpenAI(): OpenAI {
 
 function initSupabase(): SupabaseClient {
   const url = getEnvVar('SUPABASE_URL')
-  const key = getEnvVar('SUPABASE_SERVICE_KEY')
+  // Use service key if available, otherwise fall back to anon key (works if RLS is disabled)
+  const key = process.env.SUPABASE_SERVICE_KEY ?? getEnvVar('SUPABASE_ANON_KEY')
   return createClient(url, key, {
     db: { schema: SCHEMA_NAME },
   })
@@ -192,8 +203,10 @@ async function main(): Promise<void> {
 
     const batchStartTime = Date.now()
 
-    // Generate embeddings for the batch
-    const texts = batch.map((c) => c.full_path)
+    // Generate embeddings for the batch using enriched text
+    const texts = batch.map((c) =>
+      generateEnrichedText(c.category_code, c.category_name, c.full_path)
+    )
     const embeddings = await generateEmbeddingsBatch(openaiClient, texts)
 
     // Add embeddings to records

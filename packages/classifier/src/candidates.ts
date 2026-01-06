@@ -84,40 +84,34 @@ export async function getCandidatesFromEmbeddings(
 
 /**
  * Build search text from classification input.
- * Combines title, description, and tags for embedding search.
  *
- * NOTE: ProductType is intentionally excluded to avoid biasing embedding search.
- * ProductType is often a broad merchant-assigned label (e.g., "Bakery") that may
- * not reflect where customers would look for the product. We want semantic matching
- * based on what the product actually is, not how the merchant categorized it.
- * ProductType is still passed to the LLM as context for its decision.
+ * Uses a SIMPLIFIED approach: title + productType (if available).
+ * This matches better with taxonomy embeddings which are based on category names.
+ *
+ * Full product descriptions are too verbose and don't embed close to category names.
+ * ProductType values like "Chocolate", "Pasta", "Granola" match our enriched
+ * category embeddings well.
  */
 export function buildSearchText(input: ClassificationInput): string {
   const parts: string[] = [input.title]
 
-  if (input.description) {
-    // Strip HTML and truncate description
-    const cleanDesc = input.description
-      .replace(/<[^>]*>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .slice(0, 500)
-    if (cleanDesc) {
-      parts.push(cleanDesc)
-    }
+  // Include ProductType if available - it usually contains the core product category
+  // e.g., "Chocolate", "Pasta", "Hot Sauce", "Crackers"
+  if (input.productType) {
+    parts.push(input.productType)
   }
 
-  // Include only product-descriptive tags, not marketing tags
+  // Include a few key tags that describe the product type (not marketing tags)
   if (input.tags && input.tags.length > 0) {
     const productTags = input.tags
       .filter((t) => !isMarketingTag(t))
-      .slice(0, 5)
+      .slice(0, 3) // Fewer tags to keep search focused
     if (productTags.length > 0) {
       parts.push(productTags.join(' '))
     }
   }
 
-  return parts.join(' | ')
+  return parts.join(' ')
 }
 
 /**

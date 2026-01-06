@@ -3,6 +3,14 @@ import type {
   TaxonomyCategory,
   TaxonomyData,
 } from './types.js'
+import { createRequire } from 'node:module'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+// ESM-compatible require for file reading in Node.js
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const require = createRequire(import.meta.url)
 
 // Cached data (loaded once per process)
 let taxonomyCache: Map<string, string> | null = null
@@ -73,12 +81,6 @@ export function initTaxonomyFromData(
  * Helper to get data directory path (Node.js only).
  */
 function getDataDir(): string {
-  // Dynamic imports to avoid bundling issues in Workers
-  const { readFileSync } = require('node:fs')
-  const { dirname, join } = require('node:path')
-  const { fileURLToPath } = require('node:url')
-
-  const __dirname = dirname(fileURLToPath(import.meta.url))
   return join(__dirname, '../../data')
 }
 
@@ -87,7 +89,6 @@ function getDataDir(): string {
  */
 function readDataFile(filename: string): string {
   const { readFileSync } = require('node:fs')
-  const { join } = require('node:path')
   return readFileSync(join(getDataDir(), filename), 'utf-8')
 }
 
@@ -141,14 +142,22 @@ export function loadTaxonomyReverse(): Map<string, string> {
 }
 
 /**
+ * Check if we're in a Node.js environment (can use fs/path).
+ * Workers and browsers don't have process.versions.node
+ */
+function isNodeEnvironment(): boolean {
+  return typeof process !== 'undefined' && process.versions?.node !== undefined
+}
+
+/**
  * Load full taxonomy with attributes from taxonomy.json (cached).
  * Returns a map of category codes to full category details.
  */
 export function loadTaxonomyFull(): Map<string, TaxonomyCategory> {
   if (fullTaxonomyCache) return fullTaxonomyCache
 
-  // In Workers, must be initialized via initTaxonomyFromData first
-  if (typeof require === 'undefined') {
+  // In Workers/browsers, must be initialized via initTaxonomyFromData first
+  if (!isNodeEnvironment()) {
     throw new Error(
       'Taxonomy not initialized. Call initTaxonomyFromData() first in Worker environments.',
     )

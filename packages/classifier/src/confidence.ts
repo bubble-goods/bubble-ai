@@ -11,11 +11,21 @@ import type {
 /** Default threshold for auto-accepting classifications */
 export const DEFAULT_CONFIDENCE_THRESHOLD = 0.85
 
-/** Weights for combining confidence signals */
+/**
+ * Weights for combining confidence signals.
+ *
+ * LLM confidence is weighted heavily (85%) because the LLM is the decision-maker
+ * and its self-reported certainty is the primary signal. Embedding score (10%)
+ * serves as a sanity check for candidate quality, not a confidence multiplier.
+ * Embedding similarity scores typically max around 0.4-0.6 regardless of accuracy.
+ *
+ * Industry practice for hybrid retrieval + LLM classification systems treats
+ * retrieval scores and classification confidence as separate concerns.
+ */
 const WEIGHTS = {
-  llmConfidence: 0.6,
-  embeddingScore: 0.3,
-  bundleAdjustment: 0.1,
+  llmConfidence: 0.85,
+  embeddingScore: 0.1,
+  bundleAdjustment: 0.05,
 }
 
 /**

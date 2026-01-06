@@ -10,7 +10,23 @@ export interface EmbeddingSearchOptions {
 }
 
 /**
+ * Calculate cosine similarity between two vectors.
+ */
+function cosineSimilarity(a: number[], b: number[]): number {
+  let dotProduct = 0
+  let normA = 0
+  let normB = 0
+  for (let i = 0; i < a.length; i++) {
+    dotProduct += a[i] * b[i]
+    normA += a[i] * a[i]
+    normB += b[i] * b[i]
+  }
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB))
+}
+
+/**
  * Search for taxonomy categories using vector similarity.
+ * Uses client-side similarity calculation for accuracy (IVFFlat index can miss results after bulk updates).
  * Requires an embedding generated from OpenAI text-embedding-3-small.
  */
 export async function matchTaxonomyCategories(
@@ -34,53 +50,64 @@ export async function matchTaxonomyCategories(
     embeddingLength: queryEmbedding.length,
   })
 
-  // Note: category_prefix filtering is done client-side since the RPC function
-  // doesn't support it yet. Request more results if filtering to ensure we get enough.
-  const requestCount = categoryPrefix ? matchCount * 3 : matchCount
+  // Build query with filters
+  let query = supabase
+    .from('embeddings')
+    .select('category_code, category_name, full_path, level, embedding')
 
-  const { data, error } = await supabase.rpc('match_categories', {
-    query_embedding: queryEmbedding,
-    match_threshold: matchThreshold,
-    match_count: requestCount,
-    filter_level: filterLevel,
-  })
+  if (filterLevel !== null) {
+    query = query.eq('level', filterLevel)
+  }
 
-  console.log('[DEBUG taxonomy] RPC response:', {
-    error: error?.message ?? null,
-    dataLength: data?.length ?? 0,
-    data: data?.slice(0, 2), // First 2 results for debugging
-  })
+  if (categoryPrefix) {
+    query = query.like('category_code', `${categoryPrefix}%`)
+  }
+
+  const { data, error } = await query
 
   if (error) {
-    throw new Error(`Supabase RPC error: ${error.message}`)
+    throw new Error(`Supabase query error: ${error.message}`)
   }
 
-  // Filter by category prefix if specified (client-side filtering)
-  let results = data ?? []
-  if (categoryPrefix) {
-    results = results.filter((row: { category_code: string }) =>
-      row.category_code.startsWith(categoryPrefix)
-    )
+  // Calculate similarities client-side for accuracy
+  const results: CategorySearchResult[] = []
+  for (const row of data ?? []) {
+    // Parse embedding if it's a string (Supabase returns vectors as JSON strings)
+    let embedding = row.embedding
+    if (typeof embedding === 'string') {
+      try {
+        embedding = JSON.parse(embedding)
+      } catch {
+        continue // Skip invalid embeddings
+      }
+    }
+
+    if (!Array.isArray(embedding) || embedding.length !== queryEmbedding.length) {
+      continue
+    }
+
+    const similarity = cosineSimilarity(queryEmbedding, embedding)
+    if (similarity >= matchThreshold) {
+      results.push({
+        categoryCode: row.category_code,
+        categoryName: row.category_name,
+        fullPath: row.full_path,
+        level: row.level,
+        similarity,
+      })
+    }
   }
 
-  // Limit to requested count after filtering
-  results = results.slice(0, matchCount)
+  // Sort by similarity descending and limit
+  results.sort((a, b) => b.similarity - a.similarity)
 
-  return results.map(
-    (row: {
-      category_code: string
-      category_name: string
-      full_path: string
-      level: number
-      similarity: number
-    }) => ({
-      categoryCode: row.category_code,
-      categoryName: row.category_name,
-      fullPath: row.full_path,
-      level: row.level,
-      similarity: row.similarity,
-    }),
-  )
+  console.log('[DEBUG taxonomy] RPC response:', {
+    error: null,
+    dataLength: results.length,
+    data: results.slice(0, 2),
+  })
+
+  return results.slice(0, matchCount)
 }
 
 /**
