@@ -1,0 +1,144 @@
+{
+  "$schema": "./producttype-mappings.schema.json",
+  "version": "1.0.0",
+  "description": "Maps Shopify ProductType values to taxonomy category codes for search anchoring",
+  "mappings": [
+    {
+      "productType": "Bakery",
+      "categoryCode": "fb-2-1",
+      "notes": "Food Items > Bakery"
+    },
+    {
+      "productType": "Chocolate",
+      "categoryCode": "fb-2-3",
+      "notes": "Food Items > Candy & Chocolate"
+    },
+    {
+      "productType": "Candy",
+      "categoryCode": "fb-2-3",
+      "notes": "Food Items > Candy & Chocolate"
+    },
+    {
+      "productType": "Snacks",
+      "categoryCode": "fb-2-17",
+      "notes": "Food Items > Snack Foods"
+    },
+    {
+      "productType": "Chips",
+      "categoryCode": "fb-2-17-4",
+      "notes": "Food Items > Snack Foods > Chips"
+    },
+    {
+      "productType": "Crackers",
+      "categoryCode": "fb-2-17-5",
+      "notes": "Food Items > Snack Foods > Crackers"
+    },
+    {
+      "productType": "Cookies",
+      "categoryCode": "fb-2-1-6",
+      "notes": "Food Items > Bakery > Cookies"
+    },
+    {
+      "productType": "Granola",
+      "categoryCode": "fb-2-11",
+      "notes": "Food Items > Grains, Rice & Cereal"
+    },
+    {
+      "productType": "Cereal",
+      "categoryCode": "fb-2-11",
+      "notes": "Food Items > Grains, Rice & Cereal"
+    },
+    {
+      "productType": "Coffee",
+      "categoryCode": "fb-1-3",
+      "notes": "Beverages > Coffee"
+    },
+    {
+      "productType": "Tea",
+      "categoryCode": "fb-1-14",
+      "notes": "Beverages > Tea & Infusions"
+    },
+    {
+      "productType": "Juice",
+      "categoryCode": "fb-1-7-1",
+      "notes": "Beverages > Juices, Milkshakes & Smoothies > Juices"
+    },
+    {
+      "productType": "Soda",
+      "categoryCode": "fb-1-12",
+      "notes": "Beverages > Soda"
+    },
+    {
+      "productType": "Water",
+      "categoryCode": "fb-1-16",
+      "notes": "Beverages > Water"
+    },
+    {
+      "productType": "Sauce",
+      "categoryCode": "fb-2-4",
+      "notes": "Food Items > Condiments & Sauces"
+    },
+    {
+      "productType": "Hot Sauce",
+      "categoryCode": "fb-2-4-8",
+      "notes": "Food Items > Condiments & Sauces > Hot Sauce"
+    },
+    {
+      "productType": "Condiments",
+      "categoryCode": "fb-2-4",
+      "notes": "Food Items > Condiments & Sauces"
+    },
+    {
+      "productType": "Honey",
+      "categoryCode": "fb-2-4-6",
+      "notes": "Food Items > Condiments & Sauces > Honey"
+    },
+    {
+      "productType": "Jam",
+      "categoryCode": "fb-2-7-6",
+      "notes": "Food Items > Dips & Spreads > Jams & Jellies"
+    },
+    {
+      "productType": "Nut Butter",
+      "categoryCode": "fb-2-7-7",
+      "notes": "Food Items > Dips & Spreads > Nut Butters"
+    },
+    {
+      "productType": "Olive Oil",
+      "categoryCode": "fb-2-5-12-4",
+      "notes": "Food Items > Cooking & Baking Ingredients > Cooking Oils > Olive Oil"
+    },
+    {
+      "productType": "Pasta",
+      "categoryCode": "fb-2-14",
+      "notes": "Food Items > Pasta & Noodles"
+    },
+    {
+      "productType": "Nuts",
+      "categoryCode": "fb-2-13",
+      "notes": "Food Items > Nuts & Seeds"
+    },
+    {
+      "productType": "Dried Fruit",
+      "categoryCode": "fb-2-10",
+      "notes": "Food Items > Fruits & Vegetables"
+    },
+    {
+      "productType": "Spices",
+      "categoryCode": "fb-2-16",
+      "notes": "Food Items > Seasonings & Spices"
+    },
+    {
+      "productType": "Gift Box",
+      "categoryCode": "fb-2",
+      "maxDepth": 2,
+      "notes": "Food Items (capped for bundles)"
+    },
+    {
+      "productType": "Variety Pack",
+      "categoryCode": "fb-2",
+      "maxDepth": 2,
+      "notes": "Food Items (capped for bundles)"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "name": "@bubble-ai/taxonomy",
+  "version": "1.0.0",
+  "description": "Shopify product taxonomy utilities - category loading, search, and embeddings",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "data"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo 'Run lint from root'",
+    "lint:fix": "echo 'Run lint:fix from root'"
+  },
+  "keywords": [
+    "shopify",
+    "taxonomy",
+    "embeddings",
+    "categorization"
+  ],
+  "author": "Bubble Goods",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.87.1",
+    "openai": "^6.10.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.8",
+    "@types/node": "^24.10.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.15"
+  }
+}

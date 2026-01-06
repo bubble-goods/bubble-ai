@@ -82,7 +82,8 @@ CREATE OR REPLACE FUNCTION taxonomy.match_categories(
     query_embedding VECTOR(1536),
     match_threshold FLOAT DEFAULT 0.5,
     match_count INT DEFAULT 5,
-    filter_level INT DEFAULT NULL
+    filter_level INT DEFAULT NULL,
+    category_prefix TEXT DEFAULT NULL
 )
 RETURNS TABLE (
     category_code TEXT,
@@ -94,8 +95,8 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    -- Search more index clusters for better accuracy (default is 1)
-    SET LOCAL ivfflat.probes = 10;
+    -- Search 3 index clusters - balanced accuracy vs speed
+    SET LOCAL ivfflat.probes = 3;
 
     RETURN QUERY
     SELECT
@@ -108,6 +109,7 @@ BEGIN
     WHERE
         1 - (t.embedding <=> query_embedding) > match_threshold
         AND (filter_level IS NULL OR t.level = filter_level)
+        AND (category_prefix IS NULL OR t.category_code LIKE category_prefix || '%')
     ORDER BY t.embedding <=> query_embedding
     LIMIT match_count;
 END;
