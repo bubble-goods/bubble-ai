@@ -3,7 +3,6 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 export const TAXONOMY_SCHEMA = 'taxonomy'
 
 // Use generic SupabaseClient type to allow any schema
-// biome-ignore lint/suspicious/noExplicitAny: Supabase client schema typing is complex
 type TaxonomyClient = SupabaseClient<any, typeof TAXONOMY_SCHEMA>
 
 let supabaseClient: TaxonomyClient | null = null

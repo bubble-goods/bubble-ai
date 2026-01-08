@@ -1,5 +1,10 @@
 # CLAUDE.md
 
+## Linear Configuration
+
+- **Default Team:** Tech
+- **Required Label:** `Repo:ai` (add to all issues created from this repository)
+
 ## Project Overview
 
 `bubble-ai` is a TypeScript library for AI/ML utilities, starting with Shopify product taxonomy embeddings and categorization.

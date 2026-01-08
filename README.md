@@ -106,10 +106,32 @@ npm run populate-embeddings -- --limit 100
 
 ## Development
 
+### Initial Setup
+
 ```bash
 # Install dependencies
 npm install
 
+# Set up environment variables (requires 1Password CLI)
+npm run setup
+```
+
+The `setup` script uses [1Password CLI](https://developer.1password.com/docs/cli/) to securely inject environment variables:
+
+1. Reads `.env.template` containing 1Password references (`op://vault/item/field`)
+2. Injects actual values from 1Password into `.env`
+3. Creates a symlink `packages/api/.dev.vars` → `.env` for Wrangler
+
+**Prerequisites:**
+- [1Password CLI](https://developer.1password.com/docs/cli/get-started/) installed
+- Access to the Bubble Goods 1Password account
+- Signed in via `op signin` or have the desktop app integration enabled
+
+**Manual alternative:** Copy `.env.template` to `.env` and fill in values manually.
+
+### Commands
+
+```bash
 # Run tests
 npm test
 
@@ -130,25 +152,60 @@ npm run build
 
 ```
 bubble-ai/
-├── src/
-│   ├── index.ts              # Main exports
-│   ├── taxonomy/
-│   │   ├── types.ts          # TypeScript types
-│   │   ├── loader.ts         # Load taxonomy data (cached)
-│   │   └── search.ts         # Search/filter functions
-│   └── embeddings/
-│       ├── client.ts         # Supabase client wrapper
-│       └── search.ts         # Vector similarity search
-├── data/
-│   ├── taxonomy.json         # Full Shopify taxonomy (~11,764 categories)
-│   └── categories.txt        # GID : path format
+├── packages/
+│   ├── taxonomy/             # Taxonomy data and search utilities
+│   │   └── src/
+│   │       ├── taxonomy/     # Category loading and search
+│   │       └── embeddings/   # Supabase vector search
+│   ├── classifier/           # Product classification library
+│   │   └── src/
+│   │       ├── classify.ts   # Main classification logic
+│   │       ├── candidates.ts # Embedding-based candidate selection
+│   │       └── ...
+│   └── api/                  # REST API (Cloudflare Workers)
+│       └── src/
+│           ├── worker.ts     # Main entry point
+│           └── routes/       # API endpoints
+│               ├── classify.ts   # POST /classify
+│               ├── taxonomy.ts   # GET /taxonomy/*
+│               └── fields.ts     # GET /fields/*
 ├── scripts/
 │   └── populate-embeddings.ts
-├── supabase/migrations/
-│   └── 001_taxonomy_embeddings.sql
-└── tests/
-    └── taxonomy.test.ts
+└── supabase/migrations/
+    └── 001_taxonomy_embeddings.sql
 ```
+
+## REST API
+
+The API package provides REST endpoints via Cloudflare Workers.
+
+### Running the API
+
+```bash
+# Development
+npm run api:dev
+
+# Deploy to production
+npm run api:deploy
+
+# Deploy to staging
+npm run api:deploy:staging
+```
+
+### Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check |
+| `/classify` | POST | Classify a single product |
+| `/classify/batch` | POST | Classify multiple products (1-10) |
+| `/taxonomy` | GET | Get taxonomy metadata |
+| `/taxonomy/categories` | GET | List/search categories |
+| `/taxonomy/categories/:code` | GET | Get category details |
+| `/taxonomy/categories/:code/children` | GET | Get child categories |
+| `/taxonomy/validate` | POST | Validate category codes |
+| `/fields/:categoryCode` | GET | Get attributes for a category |
+| `/fields/attribute/:handle` | GET | Get attribute details |
 
 ## API Reference
 
