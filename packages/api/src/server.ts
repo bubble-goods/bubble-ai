@@ -106,16 +106,43 @@ app.route('/classify', classifyRoutes)
 app.route('/taxonomy', taxonomyRoutes)
 app.route('/fields', fieldsRoutes)
 
-// OpenAPI spec endpoint
-app.doc('/openapi.json', {
-  openapi: '3.1.0',
-  info: {
-    title: 'Bubble AI API',
-    version: '1.0.0',
-    description:
-      'REST API for Bubble AI services including product classification, taxonomy browsing, and category attributes.',
-  },
-  servers: [{ url: 'http://localhost:8787', description: 'Local development' }],
+// OpenAPI spec endpoint with environment-aware server URL
+app.get('/openapi.json', (c) => {
+  const env = process.env.ENVIRONMENT || 'development'
+
+  let server: { url: string; description: string }
+  switch (env) {
+    case 'production':
+      server = {
+        url: 'https://bubble-api.bubble-goods.workers.dev',
+        description: 'Production',
+      }
+      break
+    case 'staging':
+      server = {
+        url: 'https://bubble-api-staging.bubble-goods.workers.dev',
+        description: 'Staging',
+      }
+      break
+    default:
+      server = {
+        url: 'http://localhost:8787',
+        description: 'Local development',
+      }
+  }
+
+  const spec = app.getOpenAPIDocument({
+    openapi: '3.1.0',
+    info: {
+      title: 'Bubble AI API',
+      version: '1.0.0',
+      description:
+        'REST API for Bubble AI services including product classification, taxonomy browsing, and category attributes.',
+    },
+    servers: [server],
+  })
+
+  return c.json(spec)
 })
 
 // Scalar API documentation UI
