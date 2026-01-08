@@ -9,6 +9,7 @@
     "packages/*"
   ],
   "scripts": {
+    "setup": "op inject -i .env.template -o .env --account bubblegoods.1password.com --force && ln -sf ../../.env packages/api/.dev.vars",
     "build": "turbo build",
     "test": "turbo test",
     "test:run": "turbo test:run",
@@ -20,7 +21,8 @@
     "api:dev": "npm run dev -w @bubble-ai/api",
     "api:wrangler": "npm run wrangler -w @bubble-ai/api",
     "api:deploy": "npm run deploy -w @bubble-ai/api",
-    "api:deploy:staging": "npm run deploy:staging -w @bubble-ai/api"
+    "api:deploy:staging": "npm run deploy:staging -w @bubble-ai/api",
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",
@@ -42,6 +44,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.3.8",
     "dotenv": "^17.2.3",
+    "husky": "^9.1.7",
     "tsx": "^4.21.0",
     "turbo": "^2.5.3"
   }

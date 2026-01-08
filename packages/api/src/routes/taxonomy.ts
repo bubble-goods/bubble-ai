@@ -248,12 +248,10 @@ const getCategoryPathRoute = createRoute({
         'application/json': {
           schema: z.object({
             code: z.string(),
-            path: z
-              .string()
-              .openapi({
-                example:
-                  'Food, Beverages & Tobacco > Beverages > Juice > Fruit Juice',
-              }),
+            path: z.string().openapi({
+              example:
+                'Food, Beverages & Tobacco > Beverages > Juice > Fruit Juice',
+            }),
           }),
         },
       },

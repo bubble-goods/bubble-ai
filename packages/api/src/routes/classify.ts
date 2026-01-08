@@ -14,12 +14,9 @@ const ProductInputSchema = z
       .string()
       .min(1)
       .openapi({ example: 'Organic Cold Pressed Orange Juice' }),
-    description: z
-      .string()
-      .optional()
-      .openapi({
-        example: 'Fresh squeezed organic orange juice, no added sugar.',
-      }),
+    description: z.string().optional().openapi({
+      example: 'Fresh squeezed organic orange juice, no added sugar.',
+    }),
     tags: z
       .array(z.string())
       .optional()

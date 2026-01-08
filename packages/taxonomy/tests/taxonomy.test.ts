@@ -1,6 +1,8 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { afterEach, beforeAll, describe, expect, it } from 'vitest'
 import {
-  clearCaches,
   extractCategoryCode,
   getCategoriesByLevel,
   getCategoryByCode,
@@ -9,16 +11,32 @@ import {
   getCategoryPathFromCode,
   getLeafCategories,
   getTaxonomyVersion,
+  initTaxonomyFromData,
   loadTaxonomy,
   loadTaxonomyFull,
   mapCategoryPathToGid,
   searchCategories,
+  type TaxonomyData,
   validateCategoryCode,
 } from '../src/index.js'
 
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const dataDir = resolve(__dirname, '../data')
+
+// Load taxonomy data once for all tests
+const categoriesText = readFileSync(resolve(dataDir, 'categories.txt'), 'utf-8')
+const taxonomyJson = JSON.parse(
+  readFileSync(resolve(dataDir, 'taxonomy.json'), 'utf-8'),
+) as TaxonomyData
+
 describe('taxonomy loader', () => {
+  beforeAll(() => {
+    initTaxonomyFromData(categoriesText, taxonomyJson)
+  })
+
   afterEach(() => {
-    clearCaches()
+    // Re-initialize after clearing (some tests call clearCaches)
+    initTaxonomyFromData(categoriesText, taxonomyJson)
   })
 
   describe('extractCategoryCode', () => {
@@ -84,8 +102,13 @@ describe('taxonomy loader', () => {
 })
 
 describe('taxonomy search', () => {
+  beforeAll(() => {
+    initTaxonomyFromData(categoriesText, taxonomyJson)
+  })
+
   afterEach(() => {
-    clearCaches()
+    // Re-initialize after clearing (some tests call clearCaches)
+    initTaxonomyFromData(categoriesText, taxonomyJson)
   })
 
   describe('mapCategoryPathToGid', () => {

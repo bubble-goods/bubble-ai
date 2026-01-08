@@ -43,7 +43,7 @@ const getCategoryAttributesRoute = createRoute({
   tags: ['Fields'],
   summary: 'Get category attributes',
   description:
-    'Get all attributes applicable to a category, including inherited attributes.',
+    'Get all attributes applicable to a category. Note: attributes are category-specific and not inherited from parent categories.',
   request: {
     params: z.object({
       categoryCode: z
