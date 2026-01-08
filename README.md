@@ -106,10 +106,32 @@ npm run populate-embeddings -- --limit 100
 
 ## Development
 
+### Initial Setup
+
 ```bash
 # Install dependencies
 npm install
 
+# Set up environment variables (requires 1Password CLI)
+npm run setup
+```
+
+The `setup` script uses [1Password CLI](https://developer.1password.com/docs/cli/) to securely inject environment variables:
+
+1. Reads `.env.template` containing 1Password references (`op://vault/item/field`)
+2. Injects actual values from 1Password into `.env`
+3. Creates a symlink `packages/api/.dev.vars` → `.env` for Wrangler
+
+**Prerequisites:**
+- [1Password CLI](https://developer.1password.com/docs/cli/get-started/) installed
+- Access to the Bubble Goods 1Password account
+- Signed in via `op signin` or have the desktop app integration enabled
+
+**Manual alternative:** Copy `.env.template` to `.env` and fill in values manually.
+
+### Commands
+
+```bash
 # Run tests
 npm test
 
