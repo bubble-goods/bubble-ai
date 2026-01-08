@@ -1,0 +1,35 @@
+{
+  "name": "@bubble-ai/api",
+  "version": "1.0.0",
+  "description": "REST API for Bubble AI services - taxonomy, classification, and more",
+  "type": "module",
+  "main": "src/worker.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "tail": "wrangler tail",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo 'Run lint from root'",
+    "lint:fix": "echo 'Run lint:fix from root'"
+  },
+  "keywords": [
+    "api",
+    "taxonomy",
+    "classifier",
+    "cloudflare-workers"
+  ],
+  "author": "Bubble Goods",
+  "license": "MIT",
+  "dependencies": {
+    "@bubble-ai/classifier": "*",
+    "@bubble-ai/taxonomy": "*",
+    "hono": "^4.6.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241218.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^3.99.0"
+  }
+}

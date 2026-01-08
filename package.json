@@ -17,9 +17,9 @@
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
     "populate-embeddings": "tsx scripts/populate-embeddings.ts",
-    "classifier:dev": "npm run dev -w @bubble-ai/classifier",
-    "classifier:deploy": "npm run deploy -w @bubble-ai/classifier",
-    "classifier:deploy:staging": "npm run deploy:staging -w @bubble-ai/classifier"
+    "api:dev": "npm run dev -w @bubble-ai/api",
+    "api:deploy": "npm run deploy -w @bubble-ai/api",
+    "api:deploy:staging": "npm run deploy:staging -w @bubble-ai/api"
   },
   "repository": {
     "type": "git",
