@@ -5,8 +5,8 @@
   "type": "module",
   "main": "src/worker.ts",
   "scripts": {
-    "dev": "wrangler dev",
-    "dev:node": "tsx --watch src/server.ts",
+    "dev": "tsx --watch src/server.ts",
+    "wrangler": "wrangler dev",
     "deploy": "wrangler deploy",
     "deploy:staging": "wrangler deploy --env staging",
     "tail": "wrangler tail",
