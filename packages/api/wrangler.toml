@@ -1,4 +1,5 @@
 name = "bubble-api"
+account_id = "b67efb1bffe622d9f7d9da2e2da129c3"
 main = "src/worker.ts"
 compatibility_date = "2024-12-18"
 compatibility_flags = ["nodejs_compat"]
