@@ -6,6 +6,7 @@
   "main": "src/worker.ts",
   "scripts": {
     "dev": "wrangler dev",
+    "dev:node": "tsx --watch src/server.ts",
     "deploy": "wrangler deploy",
     "deploy:staging": "wrangler deploy --env staging",
     "tail": "wrangler tail",
@@ -24,11 +25,15 @@
   "dependencies": {
     "@bubble-ai/classifier": "*",
     "@bubble-ai/taxonomy": "*",
+    "@hono/node-server": "^1.13.0",
     "hono": "^4.6.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241218.0",
+    "@types/node": "^24.10.2",
+    "dotenv": "^16.4.0",
+    "tsx": "^4.19.0",
     "typescript": "^5.9.3",
     "wrangler": "^3.99.0"
   }
