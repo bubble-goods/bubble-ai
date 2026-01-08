@@ -5,6 +5,7 @@
  * - Product classification (/classify)
  * - Taxonomy browsing (/taxonomy)
  * - Category attributes (/fields)
+ * - OpenAPI documentation (/docs)
  *
  * @see https://linear.app/bubble-goods/issue/BG-873
  */
@@ -14,7 +15,8 @@ import {
   initTaxonomyFromData,
   type TaxonomyData,
 } from '@bubble-ai/taxonomy'
-import { Hono } from 'hono'
+import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
+import { apiReference } from '@scalar/hono-api-reference'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 
@@ -43,8 +45,8 @@ export interface Env {
   ENVIRONMENT: string
 }
 
-// Create Hono app with typed env
-const app = new Hono<{ Bindings: Env }>()
+// Create OpenAPIHono app with typed env
+const app = new OpenAPIHono<{ Bindings: Env }>()
 
 // Middleware
 app.use('*', logger())
@@ -77,20 +79,77 @@ app.use('*', async (c, next) => {
   await next()
 })
 
-// Health check
-app.get('/health', (c) => {
-  return c.json({
-    status: 'ok',
-    service: 'bubble-api',
-    environment: c.env.ENVIRONMENT,
-    timestamp: new Date().toISOString(),
-  })
+// Health check route
+const healthRoute = createRoute({
+  method: 'get',
+  path: '/health',
+  tags: ['Health'],
+  summary: 'Health check',
+  description: 'Returns the health status of the API.',
+  responses: {
+    200: {
+      description: 'Service is healthy',
+      content: {
+        'application/json': {
+          schema: z.object({
+            status: z.string().openapi({ example: 'ok' }),
+            service: z.string().openapi({ example: 'bubble-api' }),
+            environment: z.string().openapi({ example: 'production' }),
+            timestamp: z.string().datetime(),
+          }),
+        },
+      },
+    },
+  },
+})
+
+app.openapi(healthRoute, (c) => {
+  return c.json(
+    {
+      status: 'ok',
+      service: 'bubble-api',
+      environment: c.env.ENVIRONMENT,
+      timestamp: new Date().toISOString(),
+    },
+    200,
+  )
 })
 
 // Mount routes
 app.route('/classify', classifyRoutes)
 app.route('/taxonomy', taxonomyRoutes)
 app.route('/fields', fieldsRoutes)
+
+// OpenAPI spec endpoint
+app.doc('/openapi.json', {
+  openapi: '3.1.0',
+  info: {
+    title: 'Bubble AI API',
+    version: '1.0.0',
+    description:
+      'REST API for Bubble AI services including product classification, taxonomy browsing, and category attributes.',
+  },
+  servers: [{ url: 'http://localhost:8787', description: 'Local development' }],
+})
+
+// Scalar API documentation UI
+app.get(
+  '/docs',
+  apiReference({
+    spec: {
+      url: '/openapi.json',
+    },
+    theme: 'kepler',
+    layout: 'modern',
+    defaultHttpClient: {
+      targetKey: 'js',
+      clientKey: 'fetch',
+    },
+  }),
+)
+
+// Redirect root to docs
+app.get('/', (c) => c.redirect('/docs'))
 
 // 404 handler
 app.notFound((c) => {

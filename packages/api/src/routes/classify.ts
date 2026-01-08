@@ -3,75 +3,237 @@
  */
 
 import { type ClassificationInput, classify } from '@bubble-ai/classifier'
-import { Hono } from 'hono'
-import { z } from 'zod'
+import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
 import type { Env } from '../worker.js'
 
-// Input validation schema
-const ClassificationInputSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  productType: z.string().optional(),
-  variants: z
-    .array(
-      z.object({
-        title: z.string().optional(),
-        sku: z.string().optional(),
-        options: z.record(z.string()).optional(),
-      }),
-    )
-    .optional(),
-})
+// === Schemas ===
 
-// Config validation schema
-const ConfigSchema = z
+const ProductInputSchema = z
   .object({
-    confidenceThreshold: z.number().min(0).max(1).optional(),
+    title: z
+      .string()
+      .min(1)
+      .openapi({ example: 'Organic Cold Pressed Orange Juice' }),
+    description: z
+      .string()
+      .optional()
+      .openapi({
+        example: 'Fresh squeezed organic orange juice, no added sugar.',
+      }),
+    tags: z
+      .array(z.string())
+      .optional()
+      .openapi({ example: ['organic', 'juice', 'citrus'] }),
+    productType: z.string().optional().openapi({ example: 'Juice' }),
+    variants: z
+      .array(
+        z.object({
+          title: z.string().optional(),
+          sku: z.string().optional(),
+          options: z.record(z.string()).optional(),
+        }),
+      )
+      .optional(),
+  })
+  .openapi('ProductInput')
+
+const ClassifierConfigSchema = z
+  .object({
+    confidenceThreshold: z
+      .number()
+      .min(0)
+      .max(1)
+      .optional()
+      .openapi({ example: 0.85 }),
     maxCandidates: z.number().int().min(1).max(50).optional(),
-    extractAttributes: z.boolean().optional(),
+    extractAttributes: z.boolean().optional().openapi({ example: true }),
     model: z.enum(['claude-sonnet', 'claude-opus', 'gpt-4o']).optional(),
   })
-  .optional()
+  .openapi('ClassifierConfig')
 
-// Request body schema
-const ClassifyRequestSchema = z.object({
-  product: ClassificationInputSchema,
-  config: ConfigSchema,
+const ClassifyRequestSchema = z
+  .object({
+    product: ProductInputSchema,
+    config: ClassifierConfigSchema.optional(),
+  })
+  .openapi('ClassifyRequest')
+
+const BatchClassifyRequestSchema = z
+  .object({
+    products: z.array(ProductInputSchema).min(1).max(10),
+    config: ClassifierConfigSchema.optional(),
+  })
+  .openapi('BatchClassifyRequest')
+
+const MetaSchema = z.object({
+  durationMs: z.number().int(),
+  timestamp: z.string().datetime(),
 })
 
-// Batch request schema
-const BatchRequestSchema = z.object({
-  products: z.array(ClassificationInputSchema).min(1).max(10),
-  config: ConfigSchema,
+const ClassifyResponseSchema = z
+  .object({
+    success: z.boolean(),
+    result: z.object({
+      category: z.object({
+        code: z.string(),
+        name: z.string(),
+        fullPath: z.string(),
+        confidence: z.number(),
+      }),
+      attributes: z
+        .array(
+          z.object({
+            handle: z.string(),
+            value: z.string(),
+            confidence: z.number(),
+          }),
+        )
+        .optional(),
+      signals: z.record(z.unknown()).optional(),
+      needsReview: z.boolean(),
+    }),
+    meta: MetaSchema,
+  })
+  .openapi('ClassifyResponse')
+
+const BatchClassifyResponseSchema = z
+  .object({
+    success: z.boolean(),
+    results: z.array(
+      z.object({
+        success: z.boolean(),
+        result: z.record(z.unknown()).optional(),
+        error: z.string().optional(),
+      }),
+    ),
+    meta: z.object({
+      count: z.number().int(),
+      succeeded: z.number().int(),
+      failed: z.number().int(),
+      durationMs: z.number().int(),
+      timestamp: z.string().datetime(),
+    }),
+  })
+  .openapi('BatchClassifyResponse')
+
+const ValidationErrorSchema = z
+  .object({
+    error: z.string().openapi({ example: 'Validation error' }),
+    details: z.array(
+      z.object({
+        path: z.string(),
+        message: z.string(),
+      }),
+    ),
+  })
+  .openapi('ValidationError')
+
+const ErrorSchema = z
+  .object({
+    error: z.string(),
+    message: z.string(),
+    meta: MetaSchema.optional(),
+  })
+  .openapi('Error')
+
+// === Routes ===
+
+const classifyRoute = createRoute({
+  method: 'post',
+  path: '/',
+  tags: ['Classification'],
+  summary: 'Classify a product',
+  description:
+    'Classifies a single product into the Shopify taxonomy using embeddings and LLM.',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: ClassifyRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Classification successful',
+      content: {
+        'application/json': {
+          schema: ClassifyResponseSchema,
+        },
+      },
+    },
+    400: {
+      description: 'Validation error',
+      content: {
+        'application/json': {
+          schema: ValidationErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Classification failed',
+      content: {
+        'application/json': {
+          schema: ErrorSchema,
+        },
+      },
+    },
+  },
 })
 
-const app = new Hono<{ Bindings: Env }>()
+const batchClassifyRoute = createRoute({
+  method: 'post',
+  path: '/batch',
+  tags: ['Classification'],
+  summary: 'Classify multiple products',
+  description: 'Classifies 1-10 products in a single request.',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: BatchClassifyRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Batch classification completed',
+      content: {
+        'application/json': {
+          schema: BatchClassifyResponseSchema,
+        },
+      },
+    },
+    400: {
+      description: 'Validation error',
+      content: {
+        'application/json': {
+          schema: ValidationErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Batch classification failed',
+      content: {
+        'application/json': {
+          schema: ErrorSchema,
+        },
+      },
+    },
+  },
+})
 
-/**
- * POST /classify - Classify a single product
- */
-app.post('/', async (c) => {
+// === App ===
+
+const app = new OpenAPIHono<{ Bindings: Env }>()
+
+app.openapi(classifyRoute, async (c) => {
   const startTime = Date.now()
 
   try {
-    const body = await c.req.json()
-    const parsed = ClassifyRequestSchema.safeParse(body)
-
-    if (!parsed.success) {
-      return c.json(
-        {
-          error: 'Validation error',
-          details: parsed.error.issues.map((i) => ({
-            path: i.path.join('.'),
-            message: i.message,
-          })),
-        },
-        400,
-      )
-    }
-
-    const { product, config } = parsed.data
+    const { product, config } = c.req.valid('json')
 
     // Set API keys for SDK clients
     if (typeof process !== 'undefined' && process.env) {
@@ -82,14 +244,17 @@ app.post('/', async (c) => {
     const result = await classify(product as ClassificationInput, config)
     const duration = Date.now() - startTime
 
-    return c.json({
-      success: true,
-      result,
-      meta: {
-        durationMs: duration,
-        timestamp: new Date().toISOString(),
+    return c.json(
+      {
+        success: true,
+        result: result as any,
+        meta: {
+          durationMs: duration,
+          timestamp: new Date().toISOString(),
+        },
       },
-    })
+      200,
+    )
   } catch (error) {
     const duration = Date.now() - startTime
     const message = error instanceof Error ? error.message : 'Unknown error'
@@ -114,30 +279,11 @@ app.post('/', async (c) => {
   }
 })
 
-/**
- * POST /classify/batch - Classify multiple products (1-10)
- */
-app.post('/batch', async (c) => {
+app.openapi(batchClassifyRoute, async (c) => {
   const startTime = Date.now()
 
   try {
-    const body = await c.req.json()
-    const parsed = BatchRequestSchema.safeParse(body)
-
-    if (!parsed.success) {
-      return c.json(
-        {
-          error: 'Validation error',
-          details: parsed.error.issues.map((i) => ({
-            path: i.path.join('.'),
-            message: i.message,
-          })),
-        },
-        400,
-      )
-    }
-
-    const { products, config } = parsed.data
+    const { products, config } = c.req.valid('json')
 
     // Set API keys for SDK clients
     if (typeof process !== 'undefined' && process.env) {
@@ -159,17 +305,20 @@ app.post('/batch', async (c) => {
 
     const duration = Date.now() - startTime
 
-    return c.json({
-      success: true,
-      results,
-      meta: {
-        count: products.length,
-        succeeded: results.filter((r) => r.success).length,
-        failed: results.filter((r) => !r.success).length,
-        durationMs: duration,
-        timestamp: new Date().toISOString(),
+    return c.json(
+      {
+        success: true,
+        results,
+        meta: {
+          count: products.length,
+          succeeded: results.filter((r) => r.success).length,
+          failed: results.filter((r) => !r.success).length,
+          durationMs: duration,
+          timestamp: new Date().toISOString(),
+        },
       },
-    })
+      200,
+    )
   } catch (error) {
     const duration = Date.now() - startTime
     const message = error instanceof Error ? error.message : 'Unknown error'
