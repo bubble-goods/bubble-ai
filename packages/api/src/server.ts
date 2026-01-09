@@ -7,9 +7,6 @@
  * Usage: npm run dev
  */
 
-import { serve } from '@hono/node-server'
-import 'dotenv/config'
-
 // Load taxonomy data
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
@@ -19,6 +16,7 @@ import {
   initTaxonomyFromData,
   type TaxonomyData,
 } from '@bubble-ai/taxonomy'
+import { serve } from '@hono/node-server'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const taxonomyPath = resolve(__dirname, '../../taxonomy/data')

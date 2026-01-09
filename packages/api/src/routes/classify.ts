@@ -232,12 +232,6 @@ app.openapi(classifyRoute, async (c) => {
   try {
     const { product, config } = c.req.valid('json')
 
-    // Set API keys for SDK clients
-    if (typeof process !== 'undefined' && process.env) {
-      process.env.ANTHROPIC_API_KEY = c.env.ANTHROPIC_API_KEY
-      process.env.OPENAI_API_KEY = c.env.OPENAI_API_KEY
-    }
-
     const result = await classify(product as ClassificationInput, config)
     const duration = Date.now() - startTime
 
@@ -281,12 +275,6 @@ app.openapi(batchClassifyRoute, async (c) => {
 
   try {
     const { products, config } = c.req.valid('json')
-
-    // Set API keys for SDK clients
-    if (typeof process !== 'undefined' && process.env) {
-      process.env.ANTHROPIC_API_KEY = c.env.ANTHROPIC_API_KEY
-      process.env.OPENAI_API_KEY = c.env.OPENAI_API_KEY
-    }
 
     // Process products sequentially to avoid rate limits
     const results = []

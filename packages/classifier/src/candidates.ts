@@ -14,6 +14,9 @@ import type { CategoryCandidate, ClassificationInput } from './types.js'
 const EMBEDDING_MODEL = 'text-embedding-3-small'
 const EMBEDDING_DIMENSIONS = 1536
 
+/** OpenAI client - created once at module load */
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+
 /** Default number of embedding candidates to retrieve */
 const DEFAULT_MAX_CANDIDATES = 10
 
@@ -27,7 +30,6 @@ const EMBEDDING_MATCH_THRESHOLD = 0.3
  * Generate embedding for text using OpenAI.
  */
 async function generateEmbedding(text: string): Promise<number[]> {
-  const openai = new OpenAI()
   const response = await openai.embeddings.create({
     model: EMBEDDING_MODEL,
     input: text,

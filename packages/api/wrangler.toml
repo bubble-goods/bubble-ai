@@ -1,8 +1,8 @@
 name = "bubble-api"
 account_id = "b67efb1bffe622d9f7d9da2e2da129c3"
 main = "src/worker.ts"
-compatibility_date = "2024-12-18"
-compatibility_flags = ["nodejs_compat"]
+compatibility_date = "2025-04-01"
+compatibility_flags = ["nodejs_compat", "nodejs_compat_populate_process_env"]
 
 # Build settings - use esbuild to bundle
 [build]
@@ -22,7 +22,7 @@ fallthrough = true
 #   - SUPABASE_ANON_KEY
 
 [vars]
-ENVIRONMENT = "production"
+ENVIRONMENT = "development"
 
 # Development settings
 [dev]
@@ -34,6 +34,11 @@ local_protocol = "http"
 name = "bubble-api-staging"
 [env.staging.vars]
 ENVIRONMENT = "staging"
+
+# Production environment
+[env.production]
+[env.production.vars]
+ENVIRONMENT = "production"
 
 # Observability
 [observability]
