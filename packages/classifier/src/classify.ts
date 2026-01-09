@@ -29,6 +29,9 @@ import type {
   ClassifierConfig,
 } from './types.js'
 
+/** Anthropic client - created once at module load */
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+
 /** Default classifier configuration */
 const DEFAULT_CONFIG: Required<ClassifierConfig> = {
   confidenceThreshold: DEFAULT_CONFIDENCE_THRESHOLD,
@@ -70,7 +73,6 @@ export async function classify(
   }
 
   // Step 3: Use LLM to select best category
-  const client = new Anthropic()
   const systemPrompt = buildClassificationSystemPrompt()
   const userPrompt = buildClassificationUserPrompt(input, candidates)
 
@@ -84,7 +86,7 @@ export async function classify(
     ),
   )
 
-  const response = await client.messages.create({
+  const response = await anthropic.messages.create({
     model: MODEL_MAP[cfg.model],
     max_tokens: 500,
     system: systemPrompt,
@@ -128,7 +130,6 @@ export async function classify(
   let attributes: AttributeAssignment[] = []
   if (cfg.extractAttributes && category.attributes) {
     attributes = await extractAttributes(
-      client,
       input,
       category.full_name,
       category.attributes,
@@ -162,7 +163,6 @@ export async function classify(
  * Extract attributes for the classified category.
  */
 async function extractAttributes(
-  client: Anthropic,
   input: ClassificationInput,
   categoryPath: string,
   attributeRefs: Array<{ id: string; name: string }>,
@@ -193,7 +193,7 @@ async function extractAttributes(
     availableAttributes,
   )
 
-  const response = await client.messages.create({
+  const response = await anthropic.messages.create({
     model: MODEL_MAP[model ?? 'claude-sonnet'],
     max_tokens: 500,
     messages: [{ role: 'user', content: prompt }],
