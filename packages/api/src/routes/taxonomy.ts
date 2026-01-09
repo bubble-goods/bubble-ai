@@ -53,6 +53,7 @@ const getTaxonomyRoute = createRoute({
   tags: ['Taxonomy'],
   summary: 'Get taxonomy metadata',
   description: 'Returns taxonomy version and total category count.',
+  security: [{ cloudflareAccess: ['admin', 'developer', 'readonly'] }],
   responses: {
     200: {
       description: 'Taxonomy metadata',
@@ -75,6 +76,7 @@ const listCategoriesRoute = createRoute({
   summary: 'List or search categories',
   description:
     'List categories with optional search, level filtering, or leaf-only filtering.',
+  security: [{ cloudflareAccess: ['admin', 'developer', 'readonly'] }],
   request: {
     query: z.object({
       q: z
@@ -140,6 +142,7 @@ const getCategoryRoute = createRoute({
   tags: ['Taxonomy'],
   summary: 'Get category details',
   description: 'Get full details for a category by its code.',
+  security: [{ cloudflareAccess: ['admin', 'developer', 'readonly'] }],
   request: {
     params: z.object({
       code: z
@@ -189,6 +192,7 @@ const getCategoryChildrenRoute = createRoute({
   tags: ['Taxonomy'],
   summary: 'Get child categories',
   description: 'Get all direct children of a category.',
+  security: [{ cloudflareAccess: ['admin', 'developer', 'readonly'] }],
   request: {
     params: z.object({
       code: z
@@ -234,6 +238,7 @@ const getCategoryPathRoute = createRoute({
   tags: ['Taxonomy'],
   summary: 'Get category path',
   description: 'Get the full path string for a category.',
+  security: [{ cloudflareAccess: ['admin', 'developer', 'readonly'] }],
   request: {
     params: z.object({
       code: z
@@ -273,6 +278,7 @@ const validateCodesRoute = createRoute({
   tags: ['Taxonomy'],
   summary: 'Validate category codes',
   description: 'Validate one or more category codes.',
+  security: [{ cloudflareAccess: ['admin', 'developer', 'readonly'] }],
   request: {
     body: {
       content: {

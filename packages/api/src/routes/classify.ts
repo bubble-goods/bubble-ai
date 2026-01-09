@@ -142,6 +142,7 @@ const classifyRoute = createRoute({
   summary: 'Classify a product',
   description:
     'Classifies a single product into the Shopify taxonomy using embeddings and LLM.',
+  security: [{ cloudflareAccess: ['admin', 'developer', 'service'] }],
   request: {
     body: {
       content: {
@@ -185,6 +186,7 @@ const batchClassifyRoute = createRoute({
   tags: ['Classification'],
   summary: 'Classify multiple products',
   description: 'Classifies 1-10 products in a single request.',
+  security: [{ cloudflareAccess: ['admin', 'developer', 'service'] }],
   request: {
     body: {
       content: {
