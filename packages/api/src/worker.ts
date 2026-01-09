@@ -19,12 +19,16 @@ import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
 import { apiReference } from '@scalar/hono-api-reference'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
-
 // Import data files - will be bundled by Wrangler
 // @ts-expect-error - Text imports configured in wrangler.toml rules
 import categoriesText from '../../taxonomy/data/categories.txt'
 // @ts-expect-error - JSON imports work in Wrangler but need explicit attribute for Node
 import taxonomyJson from '../../taxonomy/data/taxonomy.json'
+import {
+  type AuthVariables,
+  authMiddleware,
+  requireRole,
+} from './auth/index.js'
 
 // Import route handlers
 import classifyRoutes from './routes/classify.js'
@@ -43,10 +47,28 @@ export interface Env {
   SUPABASE_URL: string
   SUPABASE_ANON_KEY: string
   ENVIRONMENT: string
+  /** Optional mock email for local development auth testing */
+  CF_ACCESS_MOCK_EMAIL?: string
 }
 
-// Create OpenAPIHono app with typed env
-const app = new OpenAPIHono<{ Bindings: Env }>()
+// Create OpenAPIHono app with typed env and auth variables
+const app = new OpenAPIHono<{ Bindings: Env; Variables: AuthVariables }>()
+
+// Register security scheme for OpenAPI/Scalar
+app.openAPIRegistry.registerComponent('securitySchemes', 'cloudflareAccess', {
+  type: 'oauth2',
+  description:
+    'Cloudflare Access authentication. Roles: basic (read-only), privileged (full access).',
+  flows: {
+    implicit: {
+      authorizationUrl: 'https://bubble-goods.cloudflareaccess.com',
+      scopes: {
+        basic: 'Read-only access to GET endpoints (taxonomy, fields, docs)',
+        privileged: 'Full access to all endpoints including classification',
+      },
+    },
+  },
+})
 
 // Middleware
 app.use('*', logger())
@@ -58,6 +80,9 @@ app.use(
     allowHeaders: ['Content-Type', 'Authorization'],
   }),
 )
+
+// Auth middleware - extracts identity and role from CF Access headers
+app.use('*', authMiddleware())
 
 // Initialize taxonomy and Supabase on every request (middleware)
 app.use('*', async (c, next) => {
@@ -114,6 +139,9 @@ app.openapi(healthRoute, (c) => {
     200,
   )
 })
+
+// Role guards for protected routes
+app.use('/classify/*', requireRole('privileged'))
 
 // Mount routes
 app.route('/classify', classifyRoutes)

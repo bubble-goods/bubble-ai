@@ -8,7 +8,11 @@ import {
   validateCategoryCode,
 } from '@bubble-ai/taxonomy'
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
+import { routeSecurity } from '../auth/index.js'
 import type { Env } from '../worker.js'
+
+// Security config for fields endpoints (basic and privileged)
+const fieldsSecurity = routeSecurity('basic', 'privileged')
 
 // === Schemas ===
 
@@ -42,8 +46,9 @@ const getCategoryAttributesRoute = createRoute({
   path: '/{categoryCode}',
   tags: ['Fields'],
   summary: 'Get category attributes',
-  description:
-    'Get all attributes applicable to a category. Note: attributes are category-specific and not inherited from parent categories.',
+  description: `Get all attributes applicable to a category. Note: attributes are category-specific and not inherited from parent categories. ${fieldsSecurity.description}`,
+  security: fieldsSecurity.security,
+  ...fieldsSecurity.extension,
   request: {
     params: z.object({
       categoryCode: z
@@ -82,7 +87,9 @@ const getAttributeRoute = createRoute({
   path: '/attribute/{handle}',
   tags: ['Fields'],
   summary: 'Get attribute details',
-  description: 'Get details for a specific attribute by handle.',
+  description: `Get details for a specific attribute by handle. ${fieldsSecurity.description}`,
+  security: fieldsSecurity.security,
+  ...fieldsSecurity.extension,
   request: {
     params: z.object({
       handle: z
