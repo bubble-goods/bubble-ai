@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "dotenv -e ../../.env -- tsx --watch src/server.ts",
     "wrangler": "wrangler dev",
-    "deploy": "wrangler deploy",
+    "deploy": "wrangler deploy --env production",
     "deploy:staging": "wrangler deploy --env staging",
     "tail": "wrangler tail",
     "test": "vitest",

@@ -22,7 +22,7 @@ fallthrough = true
 #   - SUPABASE_ANON_KEY
 
 [vars]
-ENVIRONMENT = "production"
+ENVIRONMENT = "development"
 
 # Development settings
 [dev]
@@ -34,6 +34,11 @@ local_protocol = "http"
 name = "bubble-api-staging"
 [env.staging.vars]
 ENVIRONMENT = "staging"
+
+# Production environment
+[env.production]
+[env.production.vars]
+ENVIRONMENT = "production"
 
 # Observability
 [observability]
