@@ -9,8 +9,8 @@
     "wrangler": "wrangler dev",
     "deploy": "wrangler deploy --env production",
     "deploy:staging": "wrangler deploy --env staging",
-    "secrets:staging": "op run --account=bubblegoods.1password.com --env-file=../../.env.template -- sh -c 'echo \"{\\\"SUPABASE_URL\\\":\\\"$SUPABASE_URL\\\",\\\"SUPABASE_ANON_KEY\\\":\\\"$SUPABASE_ANON_KEY\\\",\\\"SUPABASE_SERVICE_KEY\\\":\\\"$SUPABASE_SERVICE_KEY\\\",\\\"OPENAI_API_KEY\\\":\\\"$OPENAI_API_KEY\\\",\\\"ANTHROPIC_API_KEY\\\":\\\"$ANTHROPIC_API_KEY\\\"}\" | npx wrangler secret:bulk --env staging'",
-    "secrets:production": "op run --account=bubblegoods.1password.com --env-file=../../.env.template -- sh -c 'echo \"{\\\"SUPABASE_URL\\\":\\\"$SUPABASE_URL\\\",\\\"SUPABASE_ANON_KEY\\\":\\\"$SUPABASE_ANON_KEY\\\",\\\"SUPABASE_SERVICE_KEY\\\":\\\"$SUPABASE_SERVICE_KEY\\\",\\\"OPENAI_API_KEY\\\":\\\"$OPENAI_API_KEY\\\",\\\"ANTHROPIC_API_KEY\\\":\\\"$ANTHROPIC_API_KEY\\\"}\" | npx wrangler secret:bulk --env production'",
+    "secrets:staging": "op run --account=bubblegoods.1password.com --env-file=../../.env.template -- sh -c 'echo \"{\\\"SUPABASE_URL\\\":\\\"$SUPABASE_URL\\\",\\\"SUPABASE_ANON_KEY\\\":\\\"$SUPABASE_ANON_KEY\\\",\\\"SUPABASE_SERVICE_KEY\\\":\\\"$SUPABASE_SERVICE_KEY\\\",\\\"OPENAI_API_KEY\\\":\\\"$OPENAI_API_KEY\\\",\\\"ANTHROPIC_API_KEY\\\":\\\"$ANTHROPIC_API_KEY\\\"}\" | npx wrangler secret bulk --env staging'",
+    "secrets:production": "op run --account=bubblegoods.1password.com --env-file=../../.env.template -- sh -c 'echo \"{\\\"SUPABASE_URL\\\":\\\"$SUPABASE_URL\\\",\\\"SUPABASE_ANON_KEY\\\":\\\"$SUPABASE_ANON_KEY\\\",\\\"SUPABASE_SERVICE_KEY\\\":\\\"$SUPABASE_SERVICE_KEY\\\",\\\"OPENAI_API_KEY\\\":\\\"$OPENAI_API_KEY\\\",\\\"ANTHROPIC_API_KEY\\\":\\\"$ANTHROPIC_API_KEY\\\"}\" | npx wrangler secret bulk --env production'",
     "tail": "wrangler tail",
     "test": "vitest",
     "test:run": "vitest run",
@@ -43,6 +43,6 @@
     "tsx": "^4.19.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4",
-    "wrangler": "^3.99.0"
+    "wrangler": "^4.0.0"
   }
 }
