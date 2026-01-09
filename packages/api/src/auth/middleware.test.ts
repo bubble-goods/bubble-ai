@@ -123,7 +123,7 @@ describe('authMiddleware', () => {
 
   it('looks up role from USER_ROLES for known email', async () => {
     const app = createTestApp()
-    // wilfred@getintothebubble.com is defined as admin in roles.ts
+    // wilfred@getintothebubble.com is defined as privileged in roles.ts
     const jwt = createMockJwt({ email: 'wilfred@getintothebubble.com' })
 
     const res = await app.request('/test', {
@@ -132,7 +132,7 @@ describe('authMiddleware', () => {
 
     expect(res.status).toBe(200)
     const auth = (await res.json()) as AuthContext
-    expect(auth.role).toBe('admin')
+    expect(auth.role).toBe('privileged')
   })
 
   it('falls back to DEFAULT_ROLE for unknown email', async () => {
@@ -145,7 +145,7 @@ describe('authMiddleware', () => {
 
     expect(res.status).toBe(200)
     const auth = (await res.json()) as AuthContext
-    expect(auth.role).toBe('readonly') // DEFAULT_ROLE
+    expect(auth.role).toBe('basic') // DEFAULT_ROLE
   })
 
   it('handles service token via CF-Access-Client-Id', async () => {
@@ -158,11 +158,11 @@ describe('authMiddleware', () => {
     expect(res.status).toBe(200)
     const auth = (await res.json()) as AuthContext
     expect(auth.identity).toBe('test-service-client-id')
-    expect(auth.role).toBe('service')
+    expect(auth.role).toBe('basic') // Default for unknown service tokens
     expect(auth.isService).toBe(true)
   })
 
-  it('allows admin in development mode without headers', async () => {
+  it('allows privileged access in development mode without headers', async () => {
     const app = createTestApp({ ENVIRONMENT: 'development' })
 
     const res = await app.request('/test')
@@ -170,7 +170,7 @@ describe('authMiddleware', () => {
     expect(res.status).toBe(200)
     const auth = (await res.json()) as AuthContext
     expect(auth.identity).toBe('dev@local')
-    expect(auth.role).toBe('admin')
+    expect(auth.role).toBe('privileged')
   })
 
   it('uses mock email in development mode when CF_ACCESS_MOCK_EMAIL is set', async () => {
@@ -184,7 +184,7 @@ describe('authMiddleware', () => {
     expect(res.status).toBe(200)
     const auth = (await res.json()) as AuthContext
     expect(auth.identity).toBe('mock@example.com')
-    expect(auth.role).toBe('readonly') // Not in USER_ROLES
+    expect(auth.role).toBe('basic') // Not in USER_ROLES, gets default
   })
 
   it('returns 401 in production mode without auth headers', async () => {
@@ -227,7 +227,7 @@ describe('requireRole', () => {
       await next()
     })
 
-    app.use('/protected/*', requireRole('admin', 'developer'))
+    app.use('/protected/*', requireRole('privileged'))
 
     app.get('/protected/resource', (c) => {
       return c.json({ success: true })
@@ -238,8 +238,8 @@ describe('requireRole', () => {
 
   it('allows matching role', async () => {
     const app = createTestApp({
-      identity: 'admin@example.com',
-      role: 'admin',
+      identity: 'privileged@example.com',
+      role: 'privileged',
       isService: false,
     })
 
@@ -250,22 +250,10 @@ describe('requireRole', () => {
     expect(data.success).toBe(true)
   })
 
-  it('allows any of the specified roles', async () => {
-    const app = createTestApp({
-      identity: 'dev@example.com',
-      role: 'developer',
-      isService: false,
-    })
-
-    const res = await app.request('/protected/resource')
-
-    expect(res.status).toBe(200)
-  })
-
   it('returns 403 for non-matching role', async () => {
     const app = createTestApp({
       identity: 'reader@example.com',
-      role: 'readonly',
+      role: 'basic',
       isService: false,
     })
 
@@ -278,10 +266,8 @@ describe('requireRole', () => {
       required: string[]
     }
     expect(data.error).toBe('Forbidden')
-    expect(data.message).toContain(
-      "Role 'readonly' cannot access this resource",
-    )
-    expect(data.required).toEqual(['admin', 'developer'])
+    expect(data.message).toContain("Role 'basic' cannot access this resource")
+    expect(data.required).toEqual(['privileged'])
   })
 
   it('returns 500 when auth context is missing', async () => {

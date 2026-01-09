@@ -4,7 +4,11 @@
 
 import { type ClassificationInput, classify } from '@bubble-ai/classifier'
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
+import { routeSecurity } from '../auth/index.js'
 import type { Env } from '../worker.js'
+
+// Security config for classification endpoints (privileged only)
+const classifySecurity = routeSecurity('privileged')
 
 // === Schemas ===
 
@@ -140,9 +144,9 @@ const classifyRoute = createRoute({
   path: '/',
   tags: ['Classification'],
   summary: 'Classify a product',
-  description:
-    'Classifies a single product into the Shopify taxonomy using embeddings and LLM.',
-  security: [{ cloudflareAccess: ['admin', 'developer', 'service'] }],
+  description: `Classifies a single product into the Shopify taxonomy using embeddings and LLM. ${classifySecurity.description}`,
+  security: classifySecurity.security,
+  ...classifySecurity.extension,
   request: {
     body: {
       content: {
@@ -185,8 +189,9 @@ const batchClassifyRoute = createRoute({
   path: '/batch',
   tags: ['Classification'],
   summary: 'Classify multiple products',
-  description: 'Classifies 1-10 products in a single request.',
-  security: [{ cloudflareAccess: ['admin', 'developer', 'service'] }],
+  description: `Classifies 1-10 products in a single request. ${classifySecurity.description}`,
+  security: classifySecurity.security,
+  ...classifySecurity.extension,
   request: {
     body: {
       content: {

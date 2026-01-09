@@ -9,12 +9,10 @@
 /**
  * Available roles in the system.
  *
- * - admin: Full access to all endpoints
- * - developer: Build/test access (read + classify)
- * - readonly: View-only access (taxonomy, docs)
- * - service: Machine-to-machine access (classify endpoints only)
+ * - basic: Read-only access (GET endpoints: taxonomy, fields, docs, health)
+ * - privileged: Full access to all endpoints (GET + POST /classify)
  */
-export type Role = 'admin' | 'developer' | 'readonly' | 'service'
+export type Role = 'basic' | 'privileged'
 
 /**
  * Human users: email → role mapping.
@@ -22,40 +20,38 @@ export type Role = 'admin' | 'developer' | 'readonly' | 'service'
  * Users not in this list receive the DEFAULT_ROLE.
  */
 export const USER_ROLES: Record<string, Role> = {
-  'wilfred@getintothebubble.com': 'admin',
-  // Add more users as needed:
-  // 'developer@getintothebubble.com': 'developer',
+  'wilfred@getintothebubble.com': 'privileged',
+  'alan@getintothebubble.com': 'privileged',
+  'greg@getintothebubble.com': 'privileged',
 }
 
 /**
  * Service tokens: CF-Access-Client-Id → role mapping.
  *
  * Service tokens are created in Cloudflare Access and used for
- * machine-to-machine authentication.
+ * machine-to-machine authentication. By default, service tokens
+ * get 'basic' access. Add specific client IDs here for 'privileged'.
  */
 export const SERVICE_ROLES: Record<string, Role> = {
-  // Add service tokens as they are created:
-  // 'abc123-client-id': 'service',
+  // Add service tokens that need privileged access:
+  // 'abc123-client-id': 'privileged',
 }
 
 /**
- * Default role for authenticated users not in USER_ROLES.
+ * Default role for authenticated users/services not explicitly mapped.
  *
  * New users with @getintothebubble.com emails can access the API
- * via Google SSO, but only have readonly access until explicitly
- * granted a higher role.
+ * via Google SSO, but only have basic (read-only) access until
+ * explicitly granted privileged access.
  */
-export const DEFAULT_ROLE: Role = 'readonly'
+export const DEFAULT_ROLE: Role = 'basic'
 
 /**
  * Role hierarchy for permission checks.
  *
  * Higher numbers indicate more permissions.
- * Note: service role is special - it can classify but not browse.
  */
 export const ROLE_HIERARCHY: Record<Role, number> = {
-  admin: 100,
-  developer: 50,
-  service: 25, // Can classify but not browse
-  readonly: 10,
+  privileged: 100,
+  basic: 10,
 }

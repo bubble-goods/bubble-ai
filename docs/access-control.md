@@ -42,21 +42,19 @@ The Bubble AI API uses a two-layer security model:
 
 | Role | Description | Typical Use Case |
 |------|-------------|------------------|
-| `admin` | Full access to all endpoints | Team leads, ops |
-| `developer` | Read + classify access | Developers, testers |
-| `readonly` | View-only access | Stakeholders, viewers |
-| `service` | M2M classification only | n8n, integrations |
+| `basic` | Read-only access (GET endpoints) | Default for all authenticated users/services |
+| `privileged` | Full access to all endpoints | Team members, trusted integrations |
 
 ## Route Access Matrix
 
-| Endpoint | admin | developer | readonly | service |
-|----------|:-----:|:---------:|:--------:|:-------:|
-| `GET /docs` | ✓ | ✓ | ✓ | ✗ |
-| `GET /health` | ✓ | ✓ | ✓ | ✓ |
-| `GET /taxonomy/*` | ✓ | ✓ | ✓ | ✗ |
-| `GET /fields/*` | ✓ | ✓ | ✓ | ✗ |
-| `POST /classify` | ✓ | ✓ | ✗ | ✓ |
-| `POST /classify/batch` | ✓ | ✓ | ✗ | ✓ |
+| Endpoint | basic | privileged |
+|----------|:-----:|:----------:|
+| `GET /docs` | ✓ | ✓ |
+| `GET /health` | ✓ | ✓ |
+| `GET /taxonomy/*` | ✓ | ✓ |
+| `GET /fields/*` | ✓ | ✓ |
+| `POST /classify` | ✗ | ✓ |
+| `POST /classify/batch` | ✗ | ✓ |
 
 ## Design Decisions
 
@@ -76,25 +74,27 @@ The Bubble AI API uses a two-layer security model:
 
 ## Managing Access
 
-### Adding a New User
+### Adding a Privileged User
 
 Edit `packages/api/src/auth/roles.ts`:
 
 ```typescript
 export const USER_ROLES: Record<string, Role> = {
-  'wilfred@getintothebubble.com': 'admin',
-  'newuser@getintothebubble.com': 'developer',  // Add here
+  'wilfred@getintothebubble.com': 'privileged',
+  'newuser@getintothebubble.com': 'privileged',  // Add here
 }
 ```
+
+Users not in this list get `basic` access by default.
 
 ### Adding a Service Token
 
 1. Create a service token in Cloudflare Access dashboard
-2. Add the Client ID to `roles.ts`:
+2. By default, service tokens get `basic` access. For `privileged` access, add the Client ID to `roles.ts`:
 
 ```typescript
 export const SERVICE_ROLES: Record<string, Role> = {
-  'abc123-client-id': 'service',  // Add here
+  'abc123-client-id': 'privileged',  // Add here for full access
 }
 ```
 
@@ -110,18 +110,18 @@ curl -X POST https://bubble-api.bubble-goods.workers.dev/classify \
 
 ### Changing the Default Role
 
-Edit `DEFAULT_ROLE` in `roles.ts`. Currently set to `readonly` so new authenticated users have limited access until explicitly granted a role.
+Edit `DEFAULT_ROLE` in `roles.ts`. Currently set to `basic` so new authenticated users/services have read-only access until explicitly granted `privileged` access.
 
 ## Local Development
 
 In development mode (`ENVIRONMENT=development`), the auth middleware behaves differently:
 
-### Auto-Admin Mode (Default)
+### Auto-Privileged Mode (Default)
 
-When no CF Access headers are present, developers automatically get admin access:
+When no CF Access headers are present, developers automatically get privileged access:
 
 ```typescript
-auth = { identity: 'dev@local', role: 'admin', isService: false }
+auth = { identity: 'dev@local', role: 'privileged', isService: false }
 ```
 
 ### Mock Email Mode
@@ -129,10 +129,10 @@ auth = { identity: 'dev@local', role: 'admin', isService: false }
 To test as a specific user, set `CF_ACCESS_MOCK_EMAIL` in `.dev.vars`:
 
 ```
-CF_ACCESS_MOCK_EMAIL=developer@getintothebubble.com
+CF_ACCESS_MOCK_EMAIL=someone@getintothebubble.com
 ```
 
-This simulates being logged in as that user, inheriting their role from `USER_ROLES`.
+This simulates being logged in as that user, inheriting their role from `USER_ROLES` (or `basic` if not listed).
 
 ## OpenAPI Security
 
@@ -163,8 +163,8 @@ Returned when authenticated but lacking required role:
 ```json
 {
   "error": "Forbidden",
-  "message": "Role 'readonly' cannot access this resource",
-  "required": ["admin", "developer", "service"]
+  "message": "Role 'basic' cannot access this resource",
+  "required": ["privileged"]
 }
 ```
 

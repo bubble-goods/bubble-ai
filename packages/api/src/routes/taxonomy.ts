@@ -13,7 +13,11 @@ import {
   validateCategoryCode,
 } from '@bubble-ai/taxonomy'
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
+import { routeSecurity } from '../auth/index.js'
 import type { Env } from '../worker.js'
+
+// Security config for taxonomy endpoints (basic and privileged)
+const taxonomySecurity = routeSecurity('basic', 'privileged')
 
 // === Schemas ===
 
@@ -52,8 +56,9 @@ const getTaxonomyRoute = createRoute({
   path: '/',
   tags: ['Taxonomy'],
   summary: 'Get taxonomy metadata',
-  description: 'Returns taxonomy version and total category count.',
-  security: [{ cloudflareAccess: ['admin', 'developer', 'readonly'] }],
+  description: `Returns taxonomy version and total category count. ${taxonomySecurity.description}`,
+  security: taxonomySecurity.security,
+  ...taxonomySecurity.extension,
   responses: {
     200: {
       description: 'Taxonomy metadata',
@@ -74,9 +79,9 @@ const listCategoriesRoute = createRoute({
   path: '/categories',
   tags: ['Taxonomy'],
   summary: 'List or search categories',
-  description:
-    'List categories with optional search, level filtering, or leaf-only filtering.',
-  security: [{ cloudflareAccess: ['admin', 'developer', 'readonly'] }],
+  description: `List categories with optional search, level filtering, or leaf-only filtering. ${taxonomySecurity.description}`,
+  security: taxonomySecurity.security,
+  ...taxonomySecurity.extension,
   request: {
     query: z.object({
       q: z
@@ -141,8 +146,9 @@ const getCategoryRoute = createRoute({
   path: '/categories/{code}',
   tags: ['Taxonomy'],
   summary: 'Get category details',
-  description: 'Get full details for a category by its code.',
-  security: [{ cloudflareAccess: ['admin', 'developer', 'readonly'] }],
+  description: `Get full details for a category by its code. ${taxonomySecurity.description}`,
+  security: taxonomySecurity.security,
+  ...taxonomySecurity.extension,
   request: {
     params: z.object({
       code: z
@@ -191,8 +197,9 @@ const getCategoryChildrenRoute = createRoute({
   path: '/categories/{code}/children',
   tags: ['Taxonomy'],
   summary: 'Get child categories',
-  description: 'Get all direct children of a category.',
-  security: [{ cloudflareAccess: ['admin', 'developer', 'readonly'] }],
+  description: `Get all direct children of a category. ${taxonomySecurity.description}`,
+  security: taxonomySecurity.security,
+  ...taxonomySecurity.extension,
   request: {
     params: z.object({
       code: z
@@ -237,8 +244,9 @@ const getCategoryPathRoute = createRoute({
   path: '/categories/{code}/path',
   tags: ['Taxonomy'],
   summary: 'Get category path',
-  description: 'Get the full path string for a category.',
-  security: [{ cloudflareAccess: ['admin', 'developer', 'readonly'] }],
+  description: `Get the full path string for a category. ${taxonomySecurity.description}`,
+  security: taxonomySecurity.security,
+  ...taxonomySecurity.extension,
   request: {
     params: z.object({
       code: z
@@ -277,8 +285,9 @@ const validateCodesRoute = createRoute({
   path: '/validate',
   tags: ['Taxonomy'],
   summary: 'Validate category codes',
-  description: 'Validate one or more category codes.',
-  security: [{ cloudflareAccess: ['admin', 'developer', 'readonly'] }],
+  description: `Validate one or more category codes. ${taxonomySecurity.description}`,
+  security: taxonomySecurity.security,
+  ...taxonomySecurity.extension,
   request: {
     body: {
       content: {

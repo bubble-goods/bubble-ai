@@ -58,15 +58,13 @@ const app = new OpenAPIHono<{ Bindings: Env; Variables: AuthVariables }>()
 app.openAPIRegistry.registerComponent('securitySchemes', 'cloudflareAccess', {
   type: 'oauth2',
   description:
-    'Cloudflare Access authentication. Roles: admin, developer, readonly, service.',
+    'Cloudflare Access authentication. Roles: basic (read-only), privileged (full access).',
   flows: {
     implicit: {
       authorizationUrl: 'https://bubble-goods.cloudflareaccess.com',
       scopes: {
-        admin: 'Full access to all endpoints',
-        developer: 'Read access plus product classification',
-        readonly: 'Browse taxonomy and documentation only',
-        service: 'Machine-to-machine classification access',
+        basic: 'Read-only access to GET endpoints (taxonomy, fields, docs)',
+        privileged: 'Full access to all endpoints including classification',
       },
     },
   },
@@ -143,7 +141,7 @@ app.openapi(healthRoute, (c) => {
 })
 
 // Role guards for protected routes
-app.use('/classify/*', requireRole('admin', 'developer', 'service'))
+app.use('/classify/*', requireRole('privileged'))
 
 // Mount routes
 app.route('/classify', classifyRoutes)

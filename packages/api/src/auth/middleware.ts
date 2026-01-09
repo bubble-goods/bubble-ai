@@ -91,7 +91,7 @@ export function authMiddleware(): MiddlewareHandler<{
 
     if (serviceClientId) {
       // Service token - look up role by client ID
-      const role = SERVICE_ROLES[serviceClientId] ?? 'service'
+      const role = SERVICE_ROLES[serviceClientId] ?? 'basic'
       auth = { identity: serviceClientId, role, isService: true }
     } else if (jwtAssertion) {
       // Human user - decode JWT to get email
@@ -113,8 +113,8 @@ export function authMiddleware(): MiddlewareHandler<{
           const role = USER_ROLES[mockEmail] ?? DEFAULT_ROLE
           auth = { identity: mockEmail, role, isService: false }
         } else {
-          // Auto-admin in dev mode for convenience
-          auth = { identity: 'dev@local', role: 'admin', isService: false }
+          // Auto-privileged in dev mode for convenience
+          auth = { identity: 'dev@local', role: 'privileged', isService: false }
         }
       } else {
         return c.json({ error: 'Unauthorized - missing auth headers' }, 401)
